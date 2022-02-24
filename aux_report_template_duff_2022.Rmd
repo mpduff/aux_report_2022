@@ -1,0 +1,92 @@
+---
+title: "Network Health Survey: Supplemental Report  \n2021-2022 School Year"
+author: "`r params$network_name`"
+
+date: "Report produced on `r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  word_document:
+    reference_docx: aux_report_style_template_2.23.22.docx
+params:
+  network_name: Baltimore City Public Schools
+  time: FALSE
+  expectations: TRUE
+  
+---
+
+```{r take out the warnings, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r data, include = FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(showtext)
+font_add_google("Merriweather", "merri")
+
+network_data_2021<- read_csv("aux_playset.csv")
+```
+\
+\
+\
+
+:::{custom-style="CenterText"}
+Part of the Networks for School Improvement Initiative\
+Funded by The Bill and Melinda Gates Foundation
+\
+
+*Prepared by*:
+
+![](pni_graphic.png){#id .class width=500px height=80px}
+\
+Learning Research and Development Center\
+University of Pittsburgh\
+\
+\
+*In collaboration with*
+
+![](carnegie_graphic.png){#id .class width=350px height=120px}
+:::
+
+\newpage
+Thank you for your participation in this year’s network health survey. The data in this report overview your network members’ responses to various questions that were included in this year’s survey but are not available through the primary report dashboard. We encourage you to review these data alongside your primary report dashboard to get a more complete understanding of your network’s current health and areas for further development. 
+
+# Who took the survey?
+
+```{r response_rate, include=FALSE}
+specific_network_data_2021<-network_data_2021%>%
+  filter(network_name==params$network_name)
+r21<-length(specific_network_data_2021$survey_response_id)
+```
+
+Overall, your network’s response rate was [r rr_22]. This is [r if(rr_22>rr21){"an improvement over"}] [r if(rr22=rr21{"consistent with"}] [r if(rr22<rr21{"below"}] last year’s response rate, which was [r rr_21]. [If response rate under 50%] Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to the Network Health team for tips on how to increase response rates moving forward.
+
+Table 1 describes the **distribution of respondents by role group**:
+
+Figures 1 and 2 show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?"
+
+```{r response_rate_by_race_ethnicity, echo=FALSE, fig.showtext=TRUE, fig.height=3, fig.width=5}
+specific_network_data_2021<-network_data_2021%>%
+  filter(network_name==params$network_name)
+race_ethnicity<-ggplot(specific_network_data_2021, aes(y=ethnicity_v3)) +
+  geom_histogram(binwidth=0.5, fill="navy") +
+  labs (
+    title="Network Respondents by Race/Ethnicity",
+    subtitle="What is your race/ethnicity?",
+    y="Race/Ethnicity",
+    x="Count"
+    )+ 
+  theme_classic()
+race_ethnicity + theme(
+  plot.title = element_text(family="merri", size=10, face="bold"),
+  plot.subtitle = element_text(family="sans", size=9, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=8),
+  axis.title.x = element_text(family="sans", size=8)
+)
+```  
+
+[INSERT GENDER_V3 BAR GRAPH HERE (FIGURE 2)]
+
+
+
+
