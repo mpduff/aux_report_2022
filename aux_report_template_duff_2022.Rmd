@@ -49,7 +49,7 @@ University of Pittsburgh\
 :::
 
 \newpage
-Thank you for your participation in this year’s network health survey. The data in this report overview your network members’ responses to various questions that were included in this year’s survey but are not available through the primary report dashboard. We encourage you to review these data alongside your primary report dashboard to get a more complete understanding of your network’s current health and areas for further development. 
+Thank you for your participation in this year’s network health survey. The data in this report overview your network members’ responses to various questions that were included in this year’s survey but are not available through the primary report dashboard. We encourage you to review these data alongside your primary report dashboard to get a more complete understanding of your network’s current health and areas for further development.
 
 # Who took the survey?
 
