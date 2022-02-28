@@ -20,6 +20,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```{r data, include = FALSE}
 library(readr)
 library(dplyr)
+library(tidyverse)
 library(ggplot2)
 library(showtext)
 library(flextable)
@@ -31,11 +32,29 @@ network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_repor
 network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_Baltimore%20Secondary%20Literacy%20Improvement%20Community%20-%20BSLIC.csv")
 ```
 
-```{r label_factors, include=FALSE}
+```{r label_role_group_factors, include=FALSE}
 network_data_2021$net_role<-factor(network_data_2021$net_role,
 levels=c(1,2,3,4),
 labels=c("Hub leaders", "Other school and district leaders", "Team leads", "Team members"))
 ```
+
+```{r label_race_ethnicity_factors, include=FALSE}
+network_data_2021<-network_data_2021%>%
+  mutate(race_ethnicity=case_when(ethnicity_v3_1==1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Black/African American",
+   ethnicity_v3_1!=1 & ethnicity_v3_2==1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Hispanic/Latino/Latina/Latinx",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3==1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Asian/Hawaiian/Pacific Islander",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4==1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Native American/First Nation",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5==1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "White",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6==1 & ethnicity_v3_7!=1 ~ "Prefer not to say",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7==1 ~ "Additional racial/ethnic identity",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "No response"))
+network_data_2021<-network_data_2021%>%
+  mutate("race_ethnicity"=replace_na(race_ethnicity, "Multiple racial/ethnic identities"))
+network_data_2021$race_ethnicity<-factor(network_data_2021$race_ethnicity,
+                                         levels=c("No response", "Prefer not to say", "Additional racial/ethnic identity", "Multiple racial/ethnic identities", "White", "Native American/First Nation", "Asian/Hawaiian/Pacific Islander", "Hispanic/Latino/Latina/Latinx", "Black/African American"))
+network_data_2021$race_ethnicity
+```
+
 \
 \
 \
@@ -88,27 +107,31 @@ rolegroup_table%>%
   set_header_labels(net_role="Network role", N="Number of respondents")%>%
   width(width=3.25)
 ```
+Note that both the percentages for your overall network response rate and the response rates per role group in Table 1 were calculated using your network roster data from the RAND foundation. 
 
+Table 2 describes the **distribution of respondents by school**:\
+[INSERT TABLE WITH RESPONDENTS BY SCHOOL HERE--POSSIBLE TO INCLUDE RESPONSE RATE % HERE?]
 
-Figures 1 and 2 show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?"
+Figures 1 and 2 show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?
 
 ```{r response_rate_by_race_ethnicity, echo=FALSE, fig.showtext=TRUE, fig.height=3, fig.width=5}
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
-race_ethnicity<-ggplot(specific_network_data_2021, aes(y=ethnicity_v3)) +
-  geom_histogram(binwidth=0.5, fill="navy") +
+race_ethnicity<-ggplot(specific_network_data_2021, aes(y=race_ethnicity)) +
+  geom_bar(aes(x=(..count../sum(..count..))),binwidth=0.5, fill="deepskyblue1") +
+  scale_x_continuous(labels=scales::percent)+
   labs (
-    title="Network Respondents by Race/Ethnicity",
+   title="Network Respondents by Race/Ethnicity",
     subtitle="What is your race/ethnicity?",
     y="Race/Ethnicity",
-    x="Count"
-    )+ 
+    x="Percent of respondents"
+    )+
   theme_classic()
 race_ethnicity + theme(
   plot.title = element_text(family="merri", size=10, face="bold"),
   plot.subtitle = element_text(family="sans", size=9, face="bold.italic"),
-  axis.title.y = element_text(family="sans", size=8),
-  axis.title.x = element_text(family="sans", size=8)
+  axis.title.y = element_text(family="sans", size=8, color="black"),
+  axis.title.x = element_text(family="sans", size=8, color="black")
 )
 ```  
 
