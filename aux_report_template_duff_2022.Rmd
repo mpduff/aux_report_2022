@@ -22,9 +22,19 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 library(showtext)
+library(flextable)
+library(modelsummary)
 font_add_google("Merriweather", "merri")
 
 network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/aux_playset.csv")
+
+network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_Baltimore%20Secondary%20Literacy%20Improvement%20Community%20-%20BSLIC.csv")
+```
+
+```{r label_factors, include=FALSE}
+network_data_2021$net_role<-factor(network_data_2021$net_role,
+levels=c(1,2,3,4),
+labels=c("Hub leaders", "Other school and district leaders", "Team leads", "Team members"))
 ```
 \
 \
@@ -57,11 +67,28 @@ Thank you for your participation in this year’s network health survey. The dat
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
 r21<-length(specific_network_data_2021$survey_response_id)
+r21
+members21<-length(network_roster_2021$first_name)
+members21
+rr21<-round((r21/members21)*100)
+rr21
+rr20<-65
 ```
 
-Overall, your network’s response rate was [r rr_22]. This is [r if(rr_22>rr21){"an improvement over"}] [r if(rr22=rr21{"consistent with"}] [r if(rr22<rr21{"below"}] last year’s response rate, which was [r rr_21]. [If response rate under 50%] Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to the Network Health team for tips on how to increase response rates moving forward.
+Overall, your network’s response rate was **`r rr21`%**. This is `r if(rr21>rr20){"an improvement over"}` `r if(rr21==rr20){"consistent with"}` `r if(rr21<rr20){"below"}` last year’s response rate, which was `r rr20`%. `r if(rr21<50){"Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to the Network Health team for tips on how to increase response rates moving forward."}`
 
 Table 1 describes the **distribution of respondents by role group**:
+
+```{r role_group_response_rates, echo=FALSE}
+specific_network_data_2021<-network_data_2021%>%
+  filter(network_name==params$network_name)
+rolegroup_table<-datasummary(net_role +1 ~ N, data=specific_network_data_2021, output="flextable")
+rolegroup_table%>%
+  set_caption(rolegroup_table, caption="Responses by Role Group")%>%
+  set_header_labels(net_role="Network role", N="Number of respondents")%>%
+  width(width=3.25)
+```
+
 
 Figures 1 and 2 show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?"
 
