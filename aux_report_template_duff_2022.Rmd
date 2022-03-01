@@ -4,8 +4,23 @@ author: "`r params$network_name`"
 
 date: "Report produced on `r format(Sys.time(), '%B %d, %Y')`"
 output: 
-  word_document:
+  officedown::rdocx_document:
     reference_docx: aux_report_style_template_2.23.22.docx
+    tables:
+      style: Table
+      layout: autofit
+      width: 1.0
+      caption:
+        style: Table Caption
+        pre: 'Table '
+        sep: ': '
+    plots:
+      style: Normal
+      align: left
+      caption:
+        style: Image Caption
+        pre: 'Figure '
+        sep: ': '
 params:
   network_name: Baltimore City Public Schools
   time: FALSE
@@ -13,8 +28,8 @@ params:
   
 ---
 
-```{r take out the warnings, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=300, tab.topcaption = TRUE, fig.topcaption = TRUE) 
 ```
 
 ```{r data, include = FALSE}
@@ -25,6 +40,8 @@ library(ggplot2)
 library(showtext)
 library(flextable)
 library(modelsummary)
+library(forcats)
+library(officedown)
 font_add_google("Merriweather", "merri")
 
 network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/aux_playset.csv")
@@ -55,6 +72,17 @@ network_data_2021$race_ethnicity<-factor(network_data_2021$race_ethnicity,
 network_data_2021$race_ethnicity
 ```
 
+```{r label_gender_factors, include=FALSE}
+network_data_2021$gender_v3
+network_data_2021$gender_v3<-factor(network_data_2021$gender_v3,
+levels=c(1,2,3,4,5),
+labels=c("Man", "Woman", "Gender queer/Gender non-conforming", "Identity not mentioned", "Prefer not to say"))
+network_data_2021<-network_data_2021%>%
+  mutate("gender_v3"=fct_explicit_na(gender_v3, "No response"))
+network_data_2021$gender_v3<-factor(network_data_2021$gender_v3,
+                                         levels=c("No response", "Prefer not to say", "Identity not mentioned", "Gender queer/Gender non-conforming", "Woman", "Man"))
+network_data_2021$gender_v3
+```
 \
 \
 \
@@ -98,12 +126,11 @@ Overall, your network’s response rate was **`r rr21`%**. This is `r if(rr21>rr
 
 Table 1 describes the **distribution of respondents by role group**:
 
-```{r role_group_response_rates, echo=FALSE}
+```{r role_group_response_rates, echo=FALSE, tab.cap="Responses by Role Group"}
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
 rolegroup_table<-datasummary(net_role +1 ~ N, data=specific_network_data_2021, output="flextable")
 rolegroup_table%>%
-  set_caption(rolegroup_table, caption="Responses by Role Group")%>%
   set_header_labels(net_role="Network role", N="Number of respondents")%>%
   width(width=3.25)
 ```
@@ -112,31 +139,49 @@ Note that both the percentages for your overall network response rate and the re
 Table 2 describes the **distribution of respondents by school**:\
 [INSERT TABLE WITH RESPONDENTS BY SCHOOL HERE--POSSIBLE TO INCLUDE RESPONSE RATE % HERE?]
 
-Figures 1 and 2 show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?
+Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?
 
-```{r response_rate_by_race_ethnicity, echo=FALSE, fig.showtext=TRUE, fig.height=3, fig.width=5}
+```{r response_rate_by_race_ethnicity, echo=FALSE, fig.id="rrRace", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Survey Respondents by Racial Ethnic Background"}
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
 race_ethnicity<-ggplot(specific_network_data_2021, aes(y=race_ethnicity)) +
   geom_bar(aes(x=(..count../sum(..count..))),binwidth=0.5, fill="deepskyblue1") +
-  scale_x_continuous(labels=scales::percent)+
+  scale_x_continuous(labels=scales::percent_format(accuracy = 1L))+
   labs (
-   title="Network Respondents by Race/Ethnicity",
-    subtitle="What is your race/ethnicity?",
+    title="What is your race/ethnicity?",
     y="Race/Ethnicity",
     x="Percent of respondents"
     )+
-  theme_classic()
+  theme_classic()+
+  theme(plot.title.position="plot")
 race_ethnicity + theme(
-  plot.title = element_text(family="merri", size=10, face="bold"),
-  plot.subtitle = element_text(family="sans", size=9, face="bold.italic"),
-  axis.title.y = element_text(family="sans", size=8, color="black"),
-  axis.title.x = element_text(family="sans", size=8, color="black")
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
 )
 ```  
 
-[INSERT GENDER_V3 BAR GRAPH HERE (FIGURE 2)]
-
+```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Survey Respondents by Gender"}
+gender<-ggplot(specific_network_data_2021, aes(y=gender_v3)) +
+  geom_bar(aes(x=(..count../sum(..count..))),binwidth=0.5, fill="deepskyblue1") +
+  scale_x_continuous(labels=scales::percent)+
+  labs (
+    title="What is your gender?",
+    y="Gender",
+    x="Percent of respondents"
+    )+
+  theme_classic()+
+  theme(plot.title.position="plot")
+gender + theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
+``` 
 
 
 
