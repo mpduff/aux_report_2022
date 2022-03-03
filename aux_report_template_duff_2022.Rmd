@@ -32,6 +32,7 @@ params:
   expectations: TRUE
   equity: TRUE
   trust: TRUE
+  state: FALSE
 ---
 
 ```{r setup, include=FALSE} 
@@ -237,6 +238,14 @@ Figure # displays **the percentage of team members and team leads who indicated 
 The remaining data in this section provide further insights from those members who shared that they do participate in inquiry routines. Team members and team leads were asked to **indicate the extent to which they found various aspects of inquiry routines challenging** (Figure #). Within your network, we found the following responses:
 
 While we anticipate a learning curve in mastering inquiry routines, if these responses are lower than you would expect, consider any additional steps the network hub can take to support members around challenging aspects of the work. Note also those aspects of inquiry routines members said were not applicable to their practice. Are these practices you would expect members to be familiar with?
+
+\newpage
+
+`r if(params$state){"# How do network members perceive the network's alignment with state piorities?"}`
+
+`r if(params$state){"An important, yet often difficult, aspect of network health is aligning the networks’ goals and activities with other priorities in schools’ surrounding environments. This increases the sense of coherence within network schools and may contribute to network engagement and sustainability."}`
+
+`r if(params$state){"While the primary report provides information about how network members perceive the network’s alignment with school and local district priorities, here we present data on the alignment of network goals with state-level priorities. Figure # displays the **distribution of network members (except hub members) who agree that the work they are doing in the network is consistent with the state’s programs and policies aimed at improving the network outcome**."}`
 
 \newpage
 # How do network members view the sustainability of the network?
