@@ -6,10 +6,14 @@ date: "Report produced on `r format(Sys.time(), '%B %d, %Y')`"
 output: 
   officedown::rdocx_document:
     reference_docx: aux_report_style_template_2.23.22.docx
+    page_size:
+      width: 8.5
+      height: 11
+      orient: "portrait"
+    page_margins:
+      right: 1
     tables:
       style: Table
-      layout: autofit
-      width: 1.0
       caption:
         style: Table Caption
         pre: 'Table '
@@ -23,9 +27,11 @@ output:
         sep: ': '
 params:
   network_name: Baltimore City Public Schools
-  time: FALSE
+  engagement: TRUE
+  time: TRUE
   expectations: TRUE
-  
+  equity: TRUE
+  trust: TRUE
 ---
 
 ```{r setup, include=FALSE} 
@@ -122,7 +128,7 @@ rr21
 rr20<-65
 ```
 
-Overall, your network’s response rate was **`r rr21`%**. This is `r if(rr21>rr20){"an improvement over"}` `r if(rr21==rr20){"consistent with"}` `r if(rr21<rr20){"below"}` last year’s response rate, which was `r rr20`%. `r if(rr21<50){"Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to the Network Health team for tips on how to increase response rates moving forward."}`
+Overall, your network’s response rate was **`r rr21`%**. This is `r if(rr21>rr20){"an improvement over"}` `r if(rr21==rr20){"consistent with"}` `r if(rr21<rr20){"below"}` last year’s response rate, which was `r rr20`%. `r if(rr21<50){"Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to Partners for Network Improvement (PNI) for tips on how to increase response rates moving forward."}`
 
 Table 1 describes the **distribution of respondents by role group**:
 
@@ -183,5 +189,74 @@ gender + theme(
 )
 ``` 
 
+\newpage
+# How do network members view network leadership?
 
+Network leadership develops and sustains many other aspects of network health. Thus, it is important to understand how network members view your network’s leadership. As a reminder, these data are particularly helpful when considered alongside other measures of network leadership included in the primary network health report.
 
+Figure # displays the **percentage of network members who know who their network leaders are**. Figure # displays the distribution of members who believe **the roles and responsibilities of network leaders are clear to them**.
+
+`r if(params$engagement){"Figure # displays **how network members report typically engaging with network leaders**. Note, these data are only for those members who indicated they know who their leaders are (see Figure #)."}`
+
+Finally, Figure # displays **how network members feel about communication with various sources in the network**. Note, these data are for all network members, regardless of whether they know who their leaders are.
+
+Together, these data show how well your members know and understand the function of leaders in your network. If your results are lower than you would expect on these measures, consider whether you can do anything to bolster connections with and support from network leaders.
+
+\newpage
+# How do respondents perceive their engagement with the network?
+
+These data summarize network members’ perceptions of time spent on network activities. Network members have multiple responsibilities, and it is crucial they view their participation as valuable if they are going to prioritize network activities amongst competing professional demands.
+
+`r if(params$time){"Figure # displays **how much time network members estimate they spend participating in the network weekly**."}`
+
+`r if(params$expectations){"Figure # displays **the extent to which network members feel the amount of time they spend on network activities aligns with their expectations**."}`
+
+`r if(params$time & params$expectations) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
+
+Figure # displays **the usefulness of various network activities from the perspective of network members**. Consider which activities network members find most useful: Are these the activities on which they spend the most time? Are there steps you could take to improve the utility of other network activities that members currently view as less useful?
+
+Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure # displays the **distribution of network members (except hub members) who would recommend this network to a colleague**.
+
+\newpage
+# How do network members perceive participation in local improvement team meetings?
+
+Consistency of network participation is important to building internal team connections and helping improvement to flourish. Team meetings need to occur frequently enough to maintain momentum around network goals and allow for collaborative problem solving and discussion. However, if network meetings occur too frequently, members may not be able to consistently attend. 
+
+Figure # displays the **percentage of network members (excluding the hub) who indicated they are part of a local improvement team**.
+
+The following questions pertain to those members who indicated they were part of a local improvement team. Figure # displays **how often members report participating in local improvement team meetings**, while Figure # displays **how frequently local improvement team meetings occur**.
+
+`r if(params$equity){"Additionally, it is important to not only consider frequency and attendance within improvement team meetings, but also the content of those meetings, or what members typically do or discuss when in attendance. Figure # displays members’ perceptions of the **frequency with which they discuss various topics related to equity during local improvement team meetings**. Given the centrality of diversity, equity, and inclusion to network improvement, consider whether local improvement teams need additional support around how to center equity in team meetings moving forward."}`
+
+`r if(params$trust){"Finally, Figure # displays **network members’ perceptions of relational trust within local improvement teams**. Consider whether this is sufficient to engage in productive dialogue and improvement routines."}`
+
+Inquiry routines are a key aspect of the continuous improvement process; however, they can be difficult to implement and master. These data summarize the degree to which your network members find various aspects of inquiry routines challenging.
+
+Figure # displays **the percentage of team members and team leads who indicated they engaged in inquiry cycle routines this year**.
+
+The remaining data in this section provide further insights from those members who shared that they do participate in inquiry routines. Team members and team leads were asked to **indicate the extent to which they found various aspects of inquiry routines challenging** (Figure #). Within your network, we found the following responses:
+
+While we anticipate a learning curve in mastering inquiry routines, if these responses are lower than you would expect, consider any additional steps the network hub can take to support members around challenging aspects of the work. Note also those aspects of inquiry routines members said were not applicable to their practice. Are these practices you would expect members to be familiar with?
+
+\newpage
+# How do network members view the sustainability of the network?
+
+This year, we began collecting data around a new set of questions aimed to help us understand perspectives around and strategies for network sustainability across the BMGF initiative. While a larger report on sustainability across the initiative is forthcoming, these data show how your network members are thinking about sustainability of various network activities. These data are divided by role group to allow you to compare the responses of those in network leadership to those in other positions within the network.
+
+## Network leaders' perceptions of sustainability
+
+Figure # displays the **percentage of network leaders who indicated the network was already planning for sustainability**. The remaining data in this section draw from this sample of network leaders.
+
+Figure # summarizes the **extent to which network leaders’ believe various network elements are currently prioritized in the network’s sustainability planning**. 
+
+Finally, Figure # provides an overview of **how network leaders perceive potential challenges to network sustainability after support from BMGF ends**.
+
+## Other network members' perceptions of network sustainability
+
+Network members were first asked to **indicate the extent to which they agreed that various network activities were having an influence within their broader school context** (Figure #). We consider this an important precursor to sustainability as it indicates the extent to which network approaches have potentially spread within schools, giving the network firmer roots in the local context. 
+
+Figures #-## display network members’ perceptions of the likelihood that various network activities will sustain after the network no longer has access to support from BMGF. Figure # displays **how members view sustainability of network activities within their school**. Figure # displays **how they view sustainability of activities within their local improvement team**. Finally, Figure # displays **how members themselves foresee sustaining various improvement activities**. Consider how these responses align with (or diverge from) network leaders’ priorities for network sustainability.
+
+Finally, Figure # provides an overview of **how network members perceive various potential challenges to network sustainability**.
+
+Consider how these perspectives align with leaders’ sustainability priorities and their own views of potential threats to sustainability. 
