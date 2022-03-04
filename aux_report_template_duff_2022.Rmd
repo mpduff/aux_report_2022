@@ -152,7 +152,7 @@ Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents va
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
 race_ethnicity<-ggplot(specific_network_data_2021, aes(y=race_ethnicity)) +
-  geom_bar(aes(x=(..count../sum(..count..))),binwidth=0.5, fill="deepskyblue1") +
+  geom_bar(aes(x=(..count../sum(..count..))), binwidth=0.5, fill="deepskyblue1") +
   scale_x_continuous(labels=scales::percent_format(accuracy = 1L))+
   labs (
     title="What is your race/ethnicity?",
@@ -172,7 +172,7 @@ race_ethnicity + theme(
 
 ```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Survey Respondents by Gender"}
 gender<-ggplot(specific_network_data_2021, aes(y=gender_v3)) +
-  geom_bar(aes(x=(..count../sum(..count..))),binwidth=0.5, fill="deepskyblue1") +
+  geom_bar(aes(x=(..count../sum(..count..))), binwidth=0.5, fill="deepskyblue1") +
   scale_x_continuous(labels=scales::percent)+
   labs (
     title="What is your gender?",
@@ -197,9 +197,17 @@ Network leadership develops and sustains many other aspects of network health. T
 
 Figure # displays the **percentage of network members who know who their network leaders are**. Figure # displays the distribution of members who believe **the roles and responsibilities of network leaders are clear to them**.
 
+[INSERT NL_BACKGROUND_1 BAR GRAPH HERE (FIGURE #)]
+
+[INSERT NL_BACKGROUND_2 BAR GRAPH HERE (FIGURE #)]
+
 `r if(params$engagement){"Figure # displays **how network members report typically engaging with network leaders**. Note, these data are only for those members who indicated they know who their leaders are (see Figure #)."}`
 
+[INSERT NL_BACKGROUND_3_n HERE (FIGURE #)]
+
 Finally, Figure # displays **how network members feel about communication with various sources in the network**. Note, these data are for all network members, regardless of whether they know who their leaders are.
+
+[INSERT NL_NETOPS_GROUPCOM_n HERE (FIGURE #)]
 
 Together, these data show how well your members know and understand the function of leaders in your network. If your results are lower than you would expect on these measures, consider whether you can do anything to bolster connections with and support from network leaders.
 
@@ -210,13 +218,25 @@ These data summarize network members’ perceptions of time spent on network act
 
 `r if(params$time){"Figure # displays **how much time network members estimate they spend participating in the network weekly**."}`
 
+``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Estimated weekly network participation"}
+time<-ggplot(specific_network_data_2021, aes(y=so_part_t))+
+  geom_bar()
+time
+```
+
 `r if(params$expectations){"Figure # displays **the extent to which network members feel the amount of time they spend on network activities aligns with their expectations**."}`
+
+[INSERT SO_PART_EXPEC BAR GRAPH HERE (FIGURE #)]
 
 `r if(params$time & params$expectations) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
 
 Figure # displays **the usefulness of various network activities from the perspective of network members**. Consider which activities network members find most useful: Are these the activities on which they spend the most time? Are there steps you could take to improve the utility of other network activities that members currently view as less useful?
 
+[INSERT SO_PART_UTIL_n HERE (FIGURE #)]
+
 Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure # displays the **distribution of network members (except hub members) who would recommend this network to a colleague**.
+
+[INSERT RECOMMEND_1 GRAPH HERE]
 
 \newpage
 # How do network members perceive participation in local improvement team meetings?
