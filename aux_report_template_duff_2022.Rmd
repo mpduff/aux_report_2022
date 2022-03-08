@@ -36,7 +36,7 @@ params:
 ---
 
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=300, tab.topcaption = TRUE, fig.topcaption = TRUE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=600, tab.topcaption = TRUE, fig.topcaption = TRUE) 
 ```
 
 ```{r data, include = FALSE}
@@ -86,9 +86,16 @@ levels=c(1,2,3,4,5),
 labels=c("Man", "Woman", "Gender queer/Gender non-conforming", "Identity not mentioned", "Prefer not to say"))
 network_data_2021<-network_data_2021%>%
   mutate("gender_v3"=fct_explicit_na(gender_v3, "No response"))
-network_data_2021$gender_v3<-factor(network_data_2021$gender_v3,
-                                         levels=c("No response", "Prefer not to say", "Identity not mentioned", "Gender queer/Gender non-conforming", "Woman", "Man"))
 network_data_2021$gender_v3
+```
+
+```{r prepare_time_stackbars, include=FALSE}
+network_data_2021$so_part_t<-factor(network_data_2021$so_part_t,
+                                    levels=c(1,2,3,4,5,6,7),
+                                    labels=c("0-15 minutes", "16-30 minutes", "31-45 minutes", "46-60 minutes", "61-75 minutes", "76-90 minutes", "more than 90 minutes"))
+network_data_2021<-network_data_2021%>%
+  mutate("so_part_t"=fct_explicit_na(so_part_t, "No response"))
+network_data_2021$so_part_t
 ```
 \
 \
@@ -151,13 +158,20 @@ Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents va
 ```{r response_rate_by_race_ethnicity, echo=FALSE, fig.id="rrRace", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Survey Respondents by Racial Ethnic Background"}
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
-race_ethnicity<-ggplot(specific_network_data_2021, aes(y=race_ethnicity)) +
-  geom_bar(aes(x=(..count../sum(..count..))), binwidth=0.5, fill="deepskyblue1") +
-  scale_x_continuous(labels=scales::percent_format(accuracy = 1L))+
+tab_re<-specific_network_data_2021%>%
+  group_by(race_ethnicity)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  arrange(desc(Prop))
+race_ethnicity<-ggplot(tab_re, aes(x=race_ethnicity, y=Prop)) +
+  geom_col(fill="deepskyblue1") +
+  coord_flip()+
+  scale_x_discrete(limits=tab_re$race_ethnicity)+
+  scale_y_continuous(labels=scales::percent)+
   labs (
     title="What is your race/ethnicity?",
-    y="Race/Ethnicity",
-    x="Percent of respondents"
+    y="Percent of respondents",
+    x="Race/ethnicity"
     )+
   theme_classic()+
   theme(plot.title.position="plot")
@@ -216,12 +230,33 @@ Together, these data show how well your members know and understand the function
 
 These data summarize network members’ perceptions of time spent on network activities. Network members have multiple responsibilities, and it is crucial they view their participation as valuable if they are going to prioritize network activities amongst competing professional demands.
 
-`r if(params$time){"Figure # displays **how much time network members estimate they spend participating in the network weekly**."}`
+```{asis time_text, echo=params$time}
+Figure \@ref(fig:time) displays **how much time network members estimate they spend participating in the network weekly**.
+```
 
 ``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Estimated weekly network participation"}
-time<-ggplot(specific_network_data_2021, aes(y=so_part_t))+
-  geom_bar()
-time
+tab_time<-specific_network_data_2021%>%
+  group_by(so_part_t)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+ungroup()
+time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
+  geom_col(fill="deepskyblue1")+
+  scale_y_continuous(labels=scales::percent)+
+  coord_flip()+
+  labs (
+    title="How much time do you spend on network activities weekly?",
+    y="Percent of respondents",
+    x="Time on network activities")+
+  theme_classic()+
+  theme(plot.title.position="plot")
+time_plot+theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
 ```
 
 `r if(params$expectations){"Figure # displays **the extent to which network members feel the amount of time they spend on network activities aligns with their expectations**."}`
