@@ -26,7 +26,7 @@ output:
         pre: 'Figure '
         sep: ': '
 params:
-  network_name: Baltimore City Public Schools
+  network_name: New Visions INSI
   engagement: TRUE
   time: TRUE
   expect: TRUE
@@ -102,7 +102,7 @@ tab_gender<-specific_network_data_2021%>%
   ungroup()
 ```
 
-```{r prepare_time_stackbars, include=FALSE}
+```{r prepare_time_bars, include=FALSE}
 specific_network_data_2021$so_part_t<-factor(specific_network_data_2021$so_part_t,
                                     levels=c(1,2,3,4,5,6,7),
                                     labels=c("0-15 minutes", "16-30 minutes", "31-45 minutes", "46-60 minutes", "61-75 minutes", "76-90 minutes", "more than 90 minutes"))
@@ -115,10 +115,9 @@ tab_time<-specific_network_data_2021%>%
 ungroup()
 ```
 
-```{r prepare_expect_stackbars, include=FALSE}
-specific_network_data_2021$so_part_expec<-factor(specific_network_data_2021$so_part_expec,
-                                    levels=c(1,2,3,4,5),
-                                    labels=c("Much less than expected", "Somewhat less than expected", "Same as expected", "Somewhat more than expected", "Much more than expected"))
+```{r prepare_expect_bars, include=FALSE}
+specific_network_data_2021$so_part_expec<-ordered(specific_network_data_2021$so_part_expec,
+                                    levels=c("Much less than expected", "Somewhat less than expected", "Same as expected", "Somewhat more than expected", "Much more than expected"))
 specific_network_data_2021<-specific_network_data_2021%>%
   mutate("so_part_expec"=fct_explicit_na(so_part_expec, "No response"))
 specific_network_data_2021$so_part_expec
@@ -127,6 +126,11 @@ tab_expect<-specific_network_data_2021%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   ungroup()
+```
+
+```{r prepare_util_stackedbars}
+specific_network_data_2021$so_part_util_012021<-ordered(specific_network_data_2021$so_part_util_012021, levels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
+specific_network_data_2021$so_part_util_012021
 ```
 \
 \
@@ -282,27 +286,7 @@ time_plot+theme(
 Figure \@ref(fig:expect) displays **how much time network members estimate they spend participating in the network weekly**.
 ```
 
-``` {r participation_expect, eval=params$expect, echo=FALSE, fig.id="expect", fig.cap="Expected participation in network activities"}
-plot_expect<-ggplot(tab_expect, aes(x=so_part_expec, y=Prop))+
-  geom_col(fill="deepskyblue1")+
-  coord_flip()+
-  scale_y_continuous(labels=scales::percent)+
-  scale_x_discrete(labels=scales::wrap_format(15))+
-  labs(
-    title="Which statement best describes the amount of time that you are currently spending\non work relate to the network?",
-    y="Percent of respondents",
-    x="Expectations"
-  )+
-  theme_classic()+
-  theme(plot.title.position="plot")
-plot_expect+theme(
-  plot.title = element_text(family="sans", size=10, face="bold.italic"),
-  axis.title.y = element_text(family="sans", size=10, color="black"),
-  axis.title.x = element_text(family="sans", size=10, color="black"),
-  axis.text.y=element_text(family="sans", size=8, color="black"),
-  axis.text.x=element_text(family="sans", size=8, color="black")
-)
-```
+
 
 `r if(params$time & params$expect) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
 
