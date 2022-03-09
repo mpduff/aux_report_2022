@@ -29,14 +29,14 @@ params:
   network_name: Baltimore City Public Schools
   engagement: TRUE
   time: TRUE
-  expectations: TRUE
+  expect: TRUE
   equity: TRUE
   trust: TRUE
   state: FALSE
 ---
 
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=600, tab.topcaption = TRUE, fig.topcaption = TRUE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=600, tab.topcaption = TRUE, fig.topcaption = TRUE, fig.width=6, fig.height=3.5, fig.showtext=TRUE) 
 ```
 
 ```{r data, include = FALSE}
@@ -77,25 +77,56 @@ network_data_2021<-network_data_2021%>%
 network_data_2021$race_ethnicity<-factor(network_data_2021$race_ethnicity,
                                          levels=c("No response", "Prefer not to say", "Additional racial/ethnic identity", "Multiple racial/ethnic identities", "White", "Native American/First Nation", "Asian/Hawaiian/Pacific Islander", "Hispanic/Latino/Latina/Latinx", "Black/African American"))
 network_data_2021$race_ethnicity
+specific_network_data_2021<-network_data_2021%>%
+  filter(network_name==params$network_name)
+tab_re<-specific_network_data_2021%>%
+  group_by(race_ethnicity)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  arrange(desc(Prop))%>%
+  ungroup()
 ```
 
 ```{r label_gender_factors, include=FALSE}
-network_data_2021$gender_v3
-network_data_2021$gender_v3<-factor(network_data_2021$gender_v3,
+specific_network_data_2021$gender_v3
+specific_network_data_2021$gender_v3<-factor(specific_network_data_2021$gender_v3,
 levels=c(1,2,3,4,5),
 labels=c("Man", "Woman", "Gender queer/Gender non-conforming", "Identity not mentioned", "Prefer not to say"))
-network_data_2021<-network_data_2021%>%
+specific_network_data_2021<-specific_network_data_2021%>%
   mutate("gender_v3"=fct_explicit_na(gender_v3, "No response"))
-network_data_2021$gender_v3
+specific_network_data_2021$gender_v3
+tab_gender<-specific_network_data_2021%>%
+  group_by(gender_v3)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  ungroup()
 ```
 
 ```{r prepare_time_stackbars, include=FALSE}
-network_data_2021$so_part_t<-factor(network_data_2021$so_part_t,
+specific_network_data_2021$so_part_t<-factor(specific_network_data_2021$so_part_t,
                                     levels=c(1,2,3,4,5,6,7),
                                     labels=c("0-15 minutes", "16-30 minutes", "31-45 minutes", "46-60 minutes", "61-75 minutes", "76-90 minutes", "more than 90 minutes"))
-network_data_2021<-network_data_2021%>%
+network_data_2021<-specific_network_data_2021%>%
   mutate("so_part_t"=fct_explicit_na(so_part_t, "No response"))
-network_data_2021$so_part_t
+tab_time<-specific_network_data_2021%>%
+  group_by(so_part_t)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+ungroup()
+```
+
+```{r prepare_expect_stackbars, include=FALSE}
+specific_network_data_2021$so_part_expec<-factor(specific_network_data_2021$so_part_expec,
+                                    levels=c(1,2,3,4,5),
+                                    labels=c("Much less than expected", "Somewhat less than expected", "Same as expected", "Somewhat more than expected", "Much more than expected"))
+specific_network_data_2021<-specific_network_data_2021%>%
+  mutate("so_part_expec"=fct_explicit_na(so_part_expec, "No response"))
+specific_network_data_2021$so_part_expec
+tab_expect<-specific_network_data_2021%>%
+  group_by(so_part_expec)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  ungroup()
 ```
 \
 \
@@ -155,18 +186,10 @@ Table 2 describes the **distribution of respondents by school**:\
 
 Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?
 
-```{r response_rate_by_race_ethnicity, echo=FALSE, fig.id="rrRace", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Survey Respondents by Racial Ethnic Background"}
-specific_network_data_2021<-network_data_2021%>%
-  filter(network_name==params$network_name)
-tab_re<-specific_network_data_2021%>%
-  group_by(race_ethnicity)%>%
-  summarize(Freq=n())%>%
-  mutate(Prop=Freq/sum(Freq))%>%
-  arrange(desc(Prop))
+```{r response_rate_by_race_ethnicity, echo=FALSE, fig.id="rrRace", fig.cap="Survey Respondents by Racial Ethnic Background"}
 race_ethnicity<-ggplot(tab_re, aes(x=race_ethnicity, y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
-  scale_x_discrete(limits=tab_re$race_ethnicity)+
   scale_y_continuous(labels=scales::percent)+
   labs (
     title="What is your race/ethnicity?",
@@ -184,14 +207,15 @@ race_ethnicity + theme(
 )
 ```  
 
-```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Survey Respondents by Gender"}
-gender<-ggplot(specific_network_data_2021, aes(y=gender_v3)) +
-  geom_bar(aes(x=(..count../sum(..count..))), binwidth=0.5, fill="deepskyblue1") +
-  scale_x_continuous(labels=scales::percent)+
+```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.cap="Survey Respondents by Gender"}
+gender<-ggplot(tab_gender, aes(x=gender_v3, y=Prop)) +
+  geom_col(fill="deepskyblue1") +
+  coord_flip()+
+  scale_y_continuous(labels=scales::percent)+
   labs (
     title="What is your gender?",
-    y="Gender",
-    x="Percent of respondents"
+    x="Gender",
+    y="Percent of respondents"
     )+
   theme_classic()+
   theme(plot.title.position="plot")
@@ -234,12 +258,7 @@ These data summarize network members’ perceptions of time spent on network act
 Figure \@ref(fig:time) displays **how much time network members estimate they spend participating in the network weekly**.
 ```
 
-``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.showtext=TRUE, fig.height=3.5, fig.width=6, fig.cap="Estimated weekly network participation"}
-tab_time<-specific_network_data_2021%>%
-  group_by(so_part_t)%>%
-  summarize(Freq=n())%>%
-  mutate(Prop=Freq/sum(Freq))%>%
-ungroup()
+``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.cap="Estimated weekly network participation"}
 time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
   geom_col(fill="deepskyblue1")+
   scale_y_continuous(labels=scales::percent)+
@@ -259,11 +278,33 @@ time_plot+theme(
 )
 ```
 
-`r if(params$expectations){"Figure # displays **the extent to which network members feel the amount of time they spend on network activities aligns with their expectations**."}`
+```{asis expect_text, echo=params$expect}
+Figure \@ref(fig:expect) displays **how much time network members estimate they spend participating in the network weekly**.
+```
 
-[INSERT SO_PART_EXPEC BAR GRAPH HERE (FIGURE #)]
+``` {r participation_expect, eval=params$expect, echo=FALSE, fig.id="expect", fig.cap="Expected participation in network activities"}
+plot_expect<-ggplot(tab_expect, aes(x=so_part_expec, y=Prop))+
+  geom_col(fill="deepskyblue1")+
+  coord_flip()+
+  scale_y_continuous(labels=scales::percent)+
+  scale_x_discrete(labels=scales::wrap_format(15))+
+  labs(
+    title="Which statement best describes the amount of time that you are currently spending\non work relate to the network?",
+    y="Percent of respondents",
+    x="Expectations"
+  )+
+  theme_classic()+
+  theme(plot.title.position="plot")
+plot_expect+theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
+```
 
-`r if(params$time & params$expectations) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
+`r if(params$time & params$expect) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
 
 Figure # displays **the usefulness of various network activities from the perspective of network members**. Consider which activities network members find most useful: Are these the activities on which they spend the most time? Are there steps you could take to improve the utility of other network activities that members currently view as less useful?
 
