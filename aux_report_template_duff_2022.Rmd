@@ -106,7 +106,7 @@ tab_gender<-specific_network_data_2021%>%
 specific_network_data_2021$so_part_t<-factor(specific_network_data_2021$so_part_t,
                                     levels=c(1,2,3,4,5,6,7),
                                     labels=c("0-15 minutes", "16-30 minutes", "31-45 minutes", "46-60 minutes", "61-75 minutes", "76-90 minutes", "more than 90 minutes"))
-network_data_2021<-specific_network_data_2021%>%
+specific_network_data_2021<-specific_network_data_2021%>%
   mutate("so_part_t"=fct_explicit_na(so_part_t, "No response"))
 tab_time<-specific_network_data_2021%>%
   group_by(so_part_t)%>%
@@ -116,8 +116,9 @@ ungroup()
 ```
 
 ```{r prepare_expect_bars, include=FALSE}
-specific_network_data_2021$so_part_expec<-ordered(specific_network_data_2021$so_part_expec,
-                                    levels=c("Much less than expected", "Somewhat less than expected", "Same as expected", "Somewhat more than expected", "Much more than expected"))
+specific_network_data_2021$so_part_expec<-factor(specific_network_data_2021$so_part_expec,
+                                    levels=c(1,2,3,4,5),
+                                    labels=c("Much less than expected", "Somewhat less than expected", "Same as expected", "Somewhat more than expected", "Much more than expected"))
 specific_network_data_2021<-specific_network_data_2021%>%
   mutate("so_part_expec"=fct_explicit_na(so_part_expec, "No response"))
 specific_network_data_2021$so_part_expec
@@ -129,8 +130,27 @@ tab_expect<-specific_network_data_2021%>%
 ```
 
 ```{r prepare_util_stackedbars}
-specific_network_data_2021$so_part_util_012021<-ordered(specific_network_data_2021$so_part_util_012021, levels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
+specific_network_data_2021$so_part_util_012021<-factor(specific_network_data_2021$so_part_util_012021, 
+ levels=c(1,2,3,4,5,9),
+ labels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
+specific_network_data_2021<-specific_network_data_2021%>%
+  mutate("so_part_util_012021"=fct_explicit_na(so_part_util_012021, "No response"))
 specific_network_data_2021$so_part_util_012021
+
+specific_network_data_2021$so_part_util_022021<-factor(specific_network_data_2021$so_part_util_022021, 
+ levels=c(1,2,3,4,5,9),
+ labels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
+specific_network_data_2021<-specific_network_data_2021%>%
+  mutate("so_part_util_022021"=fct_explicit_na(so_part_util_022021, "No response"))
+specific_network_data_2021$so_part_util_022021
+
+specific_network_data_2021$so_part_util_152021<-factor(specific_network_data_2021$so_part_util_152021, 
+ levels=c(1,2,3,4,5,9),
+ labels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
+specific_network_data_2021<-specific_network_data_2021%>%
+  mutate("so_part_util_152021"=fct_explicit_na(so_part_util_152021, "No response"))
+specific_network_data_2021
+
 ```
 \
 \
