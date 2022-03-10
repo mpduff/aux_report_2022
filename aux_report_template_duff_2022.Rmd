@@ -12,6 +12,8 @@ output:
       orient: "portrait"
     page_margins:
       right: 1
+      bottom: 1
+      top: 1
     tables:
       style: Table
       caption:
@@ -29,14 +31,14 @@ params:
   network_name: New Visions INSI
   engagement: TRUE
   time: TRUE
-  expect: TRUE
+  expectations: TRUE
   equity: TRUE
   trust: TRUE
   state: FALSE
 ---
 
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=600, tab.topcaption = TRUE, fig.topcaption = TRUE, fig.width=6, fig.height=3.5, fig.showtext=TRUE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, dpi=600, tab.topcaption = TRUE, fig.topcaption = TRUE, fig.width=6.5, fig.height=3, fig.showtext=TRUE) 
 ```
 
 ```{r data, include = FALSE}
@@ -44,6 +46,7 @@ library(readr)
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+library(scales)
 library(showtext)
 library(flextable)
 library(modelsummary)
@@ -129,28 +132,39 @@ tab_expect<-specific_network_data_2021%>%
   ungroup()
 ```
 
-```{r prepare_util_stackedbars}
-specific_network_data_2021$so_part_util_012021<-factor(specific_network_data_2021$so_part_util_012021, 
- levels=c(1,2,3,4,5,9),
- labels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
-specific_network_data_2021<-specific_network_data_2021%>%
-  mutate("so_part_util_012021"=fct_explicit_na(so_part_util_012021, "No response"))
-specific_network_data_2021$so_part_util_012021
+```{r prepare_util_stackedbars, include=FALSE}
+useful_data<-specific_network_data_2021%>%
+  pivot_longer(so_part_util_012021:so_part_util_152021, names_to="names_util", values_to="values_util")
+useful_data
 
-specific_network_data_2021$so_part_util_022021<-factor(specific_network_data_2021$so_part_util_022021, 
- levels=c(1,2,3,4,5,9),
- labels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
-specific_network_data_2021<-specific_network_data_2021%>%
-  mutate("so_part_util_022021"=fct_explicit_na(so_part_util_022021, "No response"))
-specific_network_data_2021$so_part_util_022021
+useful_data$names_util<-as.factor(useful_data$names_util)
+useful_data$names_util<-
+  fct_recode(useful_data$names_util, 
+         "Participating in network-wide meetings" = "so_part_util_012021", 
+         "Participating in local improvement team meetings" = "so_part_util_022021",
+         "Collaborating with other network members through web-based tools (e.g., Slack, GoogleDrive, Discussion Boards)" = "so_part_util_152021"
+  )
+useful_data$names_util
 
-specific_network_data_2021$so_part_util_152021<-factor(specific_network_data_2021$so_part_util_152021, 
- levels=c(1,2,3,4,5,9),
- labels=c("Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful", "N/A or I haven't done this activity/nin the network this school year"))
-specific_network_data_2021<-specific_network_data_2021%>%
-  mutate("so_part_util_152021"=fct_explicit_na(so_part_util_152021, "No response"))
-specific_network_data_2021
+useful_data$values_util<-factor(useful_data$values_util, 
+          levels=c(1,2,3,4,5,9),
+          labels=c("Not at all useful", "A little bit useful", "Moderately useful", 
+                   "Useful", "Very useful", 
+                   "N/A; haven't done this year"))
+useful_data$values_util<-relevel(useful_data$values_util, "N/A; haven't done this year")
 
+
+useful_data_nona<-useful_data%>%
+  drop_na(values_util)
+
+useful_data_nona$values_util
+
+tab_useful<-useful_data_nona%>%
+  group_by(names_util, values_util)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
+tab_useful
 ```
 \
 \
@@ -236,6 +250,7 @@ gender<-ggplot(tab_gender, aes(x=gender_v3, y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
   scale_y_continuous(labels=scales::percent)+
+  scale_x_discrete(labels=scales::wrap_format(25))+
   labs (
     title="What is your gender?",
     x="Gender",
@@ -306,13 +321,66 @@ time_plot+theme(
 Figure \@ref(fig:expect) displays **how much time network members estimate they spend participating in the network weekly**.
 ```
 
+```{r participation_expect, eval=params$expectations, echo=FALSE, fig.id="expect", fig.cap="Expected participation in network activities"}
+plot_expect<-ggplot(tab_expect, aes(x=so_part_expec, y=Prop))+
+  geom_col(fill="deepskyblue1")+
+  coord_flip()+
+  scale_y_continuous(labels=scales::percent)+
+  scale_x_discrete(labels=scales::wrap_format(15))+
+  labs(
+    title="Which statement best describes the amount of time that you are currently spending\non work relate to the network?",
+    y="Percent of respondents",
+    x="Expectations"
+  )+
+  theme_classic()+
+  theme(plot.title.position="plot")
+plot_expect+theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
 
+```
 
 `r if(params$time & params$expect) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
 
-Figure # displays **the usefulness of various network activities from the perspective of network members**. Consider which activities network members find most useful: Are these the activities on which they spend the most time? Are there steps you could take to improve the utility of other network activities that members currently view as less useful?
+Figure \@ref(fig:useful) displays **the usefulness of various network activities from the perspective of network members**. Consider which activities network members find most useful: Are these the activities on which they spend the most time? Are there steps you could take to improve the utility of other network activities that members currently view as less useful?
 
-[INSERT SO_PART_UTIL_n HERE (FIGURE #)]
+``` {r useful_activities, echo=FALSE, fig.height=4, fig.id="useful", fig.cap="Usefulness of various network activities"}
+
+useful_plot<-ggplot(tab_useful, aes(x=fct_reorder(names_util, Pct), y=Prop, fill=values_util, position="stacked"))+
+  geom_col()+
+  coord_flip()+
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), size=3, color="black", fontface="bold", 
+            position = position_stack(vjust=.5))+
+  scale_x_discrete(labels = scales::wrap_format(25))+
+  scale_y_continuous(labels= scales::percent)+
+  labs (
+    title="Please indicate how useful each activity is to you.",
+    y="Percent of respondents",
+    x="Network activities")+
+  scale_fill_brewer(breaks=c("Very useful", "Useful", "Moderately useful", "A little bit useful",
+                             "Not at all useful", "N/A; haven't done this year"))+
+  theme_classic()+
+  theme(plot.title.position="plot",
+        legend.position= "bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+
+useful_plot+guides(fill=guide_legend(nrow=2))+
+  theme(
+    plot.title = element_text(family="sans", size=10, face="bold.italic"),
+    axis.title.y = element_text(family="sans", size=10, color="black"),
+    axis.title.x = element_text(family="sans", size=10, color="black"),
+    axis.text.y=element_text(family="sans", size=8, color="black"),
+    axis.text.x=element_text(family="sans", size=8, color="black"),
+    legend.text=element_text(size=8),
+    legend.key.size=unit(0.25, 'cm')
+  )
+```
+**Note**: Activities are ordered from least to most useful. 
 
 Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure # displays the **distribution of network members (except hub members) who would recommend this network to a colleague**.
 
