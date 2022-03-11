@@ -107,7 +107,7 @@ tab_gender<-gender_data%>%
   group_by(gender_v3)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
-  ungroup()
+  mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 
 ```{r prepare_time_bars, include=FALSE}
@@ -123,7 +123,7 @@ tab_time<-time_data%>%
   group_by(so_part_t)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
-ungroup()
+  mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 
 ```{r prepare_expect_bars, include=FALSE}
@@ -139,7 +139,7 @@ tab_expect<-expect_data%>%
   group_by(so_part_expec)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
-  ungroup()
+  mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 
 ```{r prepare_util_stackedbars, include=FALSE}
@@ -173,6 +173,22 @@ tab_useful<-useful_data%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 
+```
+
+```{r prepare_inquiry_yn_bars, include=FALSE}
+specific_network_data_2021$is_inqcyclechal_y_n<-factor(specific_network_data_2021$is_inqcyclechal_y_n,
+levels=c(1,2,3),
+labels=c("Yes", "No", "I'm not sure"))
+
+inqyn_data<-specific_network_data_2021%>%
+  drop_na(is_inqcyclechal_y_n)%>%
+  mutate(Total=length(is_inqcyclechal_y_n))
+
+tab_inqyn<-inqyn_data%>%
+  group_by(is_inqcyclechal_y_n)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 \
 \
@@ -233,7 +249,7 @@ Table 2 describes the **distribution of respondents by school**:\
 Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?
 
 ```{r response_rate_by_race_ethnicity, echo=FALSE, fig.id="rrRace", fig.cap= paste("Survey Respondents by Racial Ethnic Background (n=", race_data$Total, "respondents)")}
-race_ethnicity<-ggplot(tab_re, aes(x=fct_reorder(race_ethnicity, Prop), y=Prop)) +
+race_ethnicity<-ggplot(tab_re, aes(x=fct_reorder(race_ethnicity, Prop, .desc=TRUE), y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
   scale_y_continuous(labels=scales::percent)+
@@ -255,8 +271,8 @@ race_ethnicity +
 )
 ```  
 
-```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.cap=paste("Survey Respondents by Gender n=(", gender_data$Total, "respondents)")}
-gender<-ggplot(tab_gender, aes(x=gender_v3, y=Prop)) +
+```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.cap=paste("Survey Respondents by Gender (n=", gender_data$Total, "respondents)")}
+gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
   scale_y_continuous(labels=scales::percent)+
@@ -268,7 +284,9 @@ gender<-ggplot(tab_gender, aes(x=gender_v3, y=Prop)) +
     )+
   theme_classic()+
   theme(plot.title.position="plot")
-gender + theme(
+gender + 
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
   axis.title.x = element_text(family="sans", size=10, color="black"),
@@ -318,7 +336,9 @@ time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
     x="Time on network activities")+
   theme_classic()+
   theme(plot.title.position="plot")
-time_plot+theme(
+time_plot+
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
   axis.title.x = element_text(family="sans", size=10, color="black"),
@@ -344,7 +364,9 @@ plot_expect<-ggplot(tab_expect, aes(x=so_part_expec, y=Prop))+
   )+
   theme_classic()+
   theme(plot.title.position="plot")
-plot_expect+theme(
+plot_expect+
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
   axis.title.x = element_text(family="sans", size=10, color="black"),
@@ -360,8 +382,8 @@ Figure \@ref(fig:useful) displays **the usefulness of various network activities
 
 ``` {r useful_activities, echo=FALSE, fig.height=4, fig.id="useful", fig.cap=paste("Usefulness of Various Network Activities (n=", useful_data$Total, "respondents)")}
 
-useful_plot<-ggplot(tab_useful, aes(x=fct_reorder(names_util, Pct), y=Prop, fill=values_util, position="stacked"))+
-  geom_col()+
+useful_plot<-ggplot(tab_useful, aes(x=fct_reorder(names_util, Pct), y=Prop, fill=values_util))+
+  geom_col(position=position_stack())+
   coord_flip()+
   geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), size=3, color="black", fontface="bold", 
             position = position_stack(vjust=.5))+
@@ -413,6 +435,28 @@ The following questions pertain to those members who indicated they were part of
 Inquiry routines are a key aspect of the continuous improvement process; however, they can be difficult to implement and master. These data summarize the degree to which your network members find various aspects of inquiry routines challenging.
 
 Figure # displays **the percentage of team members and team leads who indicated they engaged in inquiry cycle routines this year**.
+
+``` {r inqcycle_y_n, echo=FALSE, fig.id="inqcycleyn", fig.cap=paste ("Engagement in Inquiry Cycles (n=", time_data$Total, "respondents)")}
+time_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=TRUE), y= Prop))+
+  geom_col(fill="deepskyblue1")+
+  scale_y_continuous(labels=scales::percent)+
+  coord_flip()+
+  labs (
+    title="Have you engaged in any inquiry routines this school year?",
+    y="Percent of respondents",
+    x="Engagement")+
+  theme_classic()+
+  theme(plot.title.position="plot")
+time_plot+
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
+```
 
 The remaining data in this section provide further insights from those members who shared that they do participate in inquiry routines. Team members and team leads were asked to **indicate the extent to which they found various aspects of inquiry routines challenging** (Figure #). Within your network, we found the following responses:
 
