@@ -51,7 +51,6 @@ library(showtext)
 library(flextable)
 library(modelsummary)
 library(forcats)
-library(unikn)
 library(officedown)
 font_add_google("Merriweather", "merri")
 
@@ -175,6 +174,16 @@ tab_useful<-useful_data%>%
 
 ```
 
+```{r prepare_improvementteam_yn_donut}
+specific_network_data_2021$part_team_meetings_1
+team_meet<-specific_network_data_2021%>%
+  drop_na(part_team_meetings_1)%>%
+  mutate(Total=length(part_team_meetings_1))%>%
+  mutate(Yes=sum(part_team_meetings_1))%>%
+  mutate(Pct=(percent(Yes/Total, accuracy=1)))
+
+```
+
 ```{r prepare_inquiry_yn_bars, include=FALSE}
 specific_network_data_2021$is_inqcyclechal_y_n<-factor(specific_network_data_2021$is_inqcyclechal_y_n,
 levels=c(1,2,3),
@@ -270,6 +279,7 @@ race_ethnicity +
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
 ```  
+**Note**: Racial/ethnic categories are ordered from lowest to highest respondent group. 
 
 ```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.cap=paste("Survey Respondents by Gender (n=", gender_data$Total, "respondents)")}
 gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Prop)) +
@@ -294,6 +304,7 @@ gender +
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
 ``` 
+**Note**: Gender categories are ordered from lowest to highest respondent group. 
 
 \newpage
 # How do network members view network leadership?
@@ -424,7 +435,7 @@ Overall, network members’ satisfaction with network engagement is captured by 
 
 Consistency of network participation is important to building internal team connections and helping improvement to flourish. Team meetings need to occur frequently enough to maintain momentum around network goals and allow for collaborative problem solving and discussion. However, if network meetings occur too frequently, members may not be able to consistently attend. 
 
-Figure # displays the **percentage of network members (excluding the hub) who indicated they are part of a local improvement team**.
+Of all network members (excluding the hub), **`r team_meet$Yes`** (or **`r team_meet$Pct`**) indicated they are part of a local improvement team.
 
 The following questions pertain to those members who indicated they were part of a local improvement team. Figure # displays **how often members report participating in local improvement team meetings**, while Figure # displays **how frequently local improvement team meetings occur**.
 
@@ -457,7 +468,6 @@ time_plot+
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
 ```
-
 The remaining data in this section provide further insights from those members who shared that they do participate in inquiry routines. Team members and team leads were asked to **indicate the extent to which they found various aspects of inquiry routines challenging** (Figure #). Within your network, we found the following responses:
 
 While we anticipate a learning curve in mastering inquiry routines, if these responses are lower than you would expect, consider any additional steps the network hub can take to support members around challenging aspects of the work. Note also those aspects of inquiry routines members said were not applicable to their practice. Are these practices you would expect members to be familiar with?
@@ -467,7 +477,6 @@ While we anticipate a learning curve in mastering inquiry routines, if these res
 # How do network members perceive the network's alignment with state piorities?
 
 ```
-
 
 `r if(params$state){"An important, yet often difficult, aspect of network health is aligning the networks’ goals and activities with other priorities in schools’ surrounding environments. This increases the sense of coherence within network schools and may contribute to network engagement and sustainability."}`
 
