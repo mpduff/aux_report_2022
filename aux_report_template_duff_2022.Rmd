@@ -209,6 +209,22 @@ tab_meet_freq<-meet_freq_data%>%
   mutate(Pct=percent(Prop, accuracy=1))
 ```
 
+```{r prepare_meeting_participation_bars, include=FALSE}
+specific_network_data_2021$part_team_meetings_2<-factor(specific_network_data_2021$part_team_meetings_2,
+                                                    levels=c(1,2,3,4,5),
+                                                    labels=c("Never", "Rarely", "Some meetings", "Almost all meetings", "All meetings"))
+
+meet_part_data<-specific_network_data_2021%>%
+  drop_na(part_team_meetings_2)%>%
+  mutate(Total=length(part_team_meetings_2))
+
+tab_meet_part<-meet_part_data%>%
+  group_by(part_team_meetings_2)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=percent(Prop, accuracy=1))
+```
+
 ```{r prepare_inquiry_yn_bars, include=FALSE}
 specific_network_data_2021$is_inqcyclechal_y_n<-factor(specific_network_data_2021$is_inqcyclechal_y_n,
 levels=c(1,2,3),
@@ -388,7 +404,7 @@ Figure \@ref(fig:expect) displays **how much time network members estimate they 
 ```
 
 ```{r participation_expect, eval=params$expectations, echo=FALSE, fig.id="expect", fig.cap=paste("Expected Participation in Network Activities (n=", expect_data$Total, "respondents)")}
-plot_expect<-ggplot(tab_expect, aes(x=so_part_expec, y=Prop))+
+plot_expect<-ggplot(tab_expect, aes(x=fct_rev(factor(so_part_expec)), y=Prop))+
   geom_col(fill="deepskyblue1")+
   coord_flip()+
   scale_y_continuous(labels=scales::percent)+
@@ -476,16 +492,39 @@ meetings_donut <- ggplot(tab_team_meet) +
 
 meetings_donut
 ```
-The following questions pertain to those members who indicated they were part of a local improvement team. Figure \@ref(fig:meetFreq) displays **how frequently local improvement team meetings occur** while Figure # displays **how often members report participating in local improvement team meetings**.
+The following questions pertain to those members who indicated they were part of a local improvement team. Figure \@ref(fig:meetFreq) displays **how frequently local improvement team meetings occur** while Figure \@ref(fig:meetPart) displays **how often members report participating in local improvement team meetings**.
 
 ``` {r team_meet_freq, echo=FALSE, fig.id="meetFreq", fig.cap=paste ("Frequency of Local Improvement Team Meetings (n=", meet_freq_data$Total, "respondents)")}
-meet_freq_plot<-ggplot(tab_meet_freq, aes(x= part_team_meet_32021, y= Prop))+
+meet_freq_plot<-ggplot(tab_meet_freq, aes(x= fct_rev(factor(part_team_meet_32021)), y= Prop))+
   geom_col(fill="deepskyblue1")+
   scale_y_continuous(labels=scales::percent)+
   scale_x_discrete(labels = scales::wrap_format(15))+
   coord_flip()+
   labs (
-    title="My local improvement team meets...",
+    title="My local improvement team meets:",
+    y="Percent of respondents",
+    x="Meeting frequency")+
+  theme_classic()+
+  theme(plot.title.position="plot")
+meet_freq_plot+
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
+```
+
+``` {r team_meet_part, echo=FALSE, fig.id="meetPart", fig.cap=paste ("Participation in Local Improvement Team Meetings (n=", meet_part_data$Total, "respondents)")}
+meet_freq_plot<-ggplot(tab_meet_part, aes(x= fct_rev(factor(part_team_meetings_2)), y= Prop))+
+  geom_col(fill="deepskyblue1")+
+  scale_y_continuous(labels=scales::percent)+
+  scale_x_discrete(labels = scales::wrap_format(15))+
+  coord_flip()+
+  labs (
+    title="I participate in my local improvement team meetings:",
     y="Percent of respondents",
     x="Meeting frequency")+
   theme_classic()+
