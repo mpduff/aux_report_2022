@@ -174,6 +174,13 @@ tab_useful<-useful_data%>%
 
 ```
 
+```{r prepare_network_recommend_data, include=FALSE}
+specific_network_data_2021$recommend
+recommend_data<-specific_network_data_2021%>%
+  drop_na(recommend)%>%
+  mutate(Total=length(recommend))
+```
+
 ```{r prepare_improvementteam_yn_donut, include=FALSE}
 specific_network_data_2021$part_team_meetings_1
 
@@ -469,8 +476,23 @@ useful_plot+guides(fill=guide_legend(nrow=2))+
 
 Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure # displays the **distribution of network members (except hub members) who would recommend this network to a colleague**.
 
-[INSERT RECOMMEND_1 GRAPH HERE]
+```{r recommend_graph, echo=FALSE, fig.id="netRec"}
+rec_graph1<-ggplot(recommend_data, aes(x=recommend))+
+  geom_col()
 
+
+rec_graph2<-ggplot(recommend_data, aes(x=recommend, fill=net_role))+
+  geom_col()
+
+rec_graph3<-ggplot(recommend_data, aes(x=recommend, color=net_role))+
+  geom_freqpoly()
+
+rec_graph1
+
+rec_graph2
+
+rec_graph3
+```
 \newpage
 # How do network members perceive participation in local improvement team meetings?
 
