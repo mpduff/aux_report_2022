@@ -51,12 +51,19 @@ library(showtext)
 library(flextable)
 library(modelsummary)
 library(forcats)
+library(magrittr)
 library(officedown)
 font_add_google("Merriweather", "merri")
 
 network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/aux_playset.csv")
 
 network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_The%20Instructional%20Network%20for%20School%20Improvement%20(INSI).csv")
+```
+
+```{r color_define, include=FALSE}
+pal2<-c("navy", "deepskyblue1")
+pal3<-c("navy", "deepskyblue1", "lightblue1")
+
 ```
 
 ```{r label_role_group_factors, include=FALSE}
@@ -142,9 +149,9 @@ tab_expect<-expect_data%>%
 ```
 
 ```{r prepare_util_stackedbars, include=FALSE}
+
 useful_data<-specific_network_data_2021%>%
   pivot_longer(so_part_util_012021:so_part_util_152021, names_to="names_util", values_to="values_util")
-useful_data
 
 useful_data$names_util<-as.factor(useful_data$names_util)
 useful_data$names_util<-
@@ -153,7 +160,6 @@ useful_data$names_util<-
          "Participating in local improvement team meetings" = "so_part_util_022021",
          "Collaborating with other network members through web-based tools (e.g., Slack, GoogleDrive, Discussion Boards)" = "so_part_util_152021"
   )
-useful_data$names_util
 
 useful_data$values_util<-factor(useful_data$values_util, 
           levels=c(1,2,3,4,5,9),
@@ -172,13 +178,24 @@ tab_useful<-useful_data%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 
+tab_useful_ordered<-tab_useful%>%
+  filter(values_util=="Very useful")%>%
+  arrange(Prop)%>%
+  extract2("names_util")
+
 ```
 
 ```{r prepare_network_recommend_data, include=FALSE}
-specific_network_data_2021$recommend
 recommend_data<-specific_network_data_2021%>%
   drop_na(recommend)%>%
   mutate(Total=length(recommend))
+
+tab_recommend<-recommend_data%>%
+  group_by(net_role, recommend)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
+
 ```
 
 ```{r prepare_improvementteam_yn_donut, include=FALSE}
@@ -441,7 +458,9 @@ Figure \@ref(fig:useful) displays **the usefulness of various network activities
 
 ``` {r useful_activities, echo=FALSE, fig.height=4, fig.id="useful", fig.cap=paste("Usefulness of Various Network Activities (n=", useful_data$Total, "respondents)")}
 
-useful_plot<-ggplot(tab_useful, aes(x=fct_reorder(names_util, Pct), y=Prop, fill=values_util))+
+useful_plot<-tab_useful%>%
+  mutate(names_util=factor(names_util, tab_useful_ordered))%>%
+           ggplot(aes(x=names_util, y=Prop, fill=fct_rev(values_util)))+
   geom_col(position=position_stack())+
   coord_flip()+
   geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), size=3, color="black", fontface="bold", 
@@ -452,15 +471,12 @@ useful_plot<-ggplot(tab_useful, aes(x=fct_reorder(names_util, Pct), y=Prop, fill
     title="Please indicate how useful each activity is to you.",
     y="Percent of respondents",
     x="Network activities")+
-  scale_fill_brewer(breaks=c("Very useful", "Useful", "Moderately useful", 
-                                             "A little bit useful", "Not at all useful", 
-                                             "N/A; haven't done this year"))+
+  scale_fill_brewer(direction=-1, breaks=c("N/A; haven't done this year", "Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful"))+
   theme_classic()+
   theme(plot.title.position="plot",
         legend.position= "bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
-
 useful_plot+guides(fill=guide_legend(nrow=2))+
   theme(
     plot.title = element_text(family="sans", size=10, face="bold.italic"),
@@ -472,27 +488,85 @@ useful_plot+guides(fill=guide_legend(nrow=2))+
     legend.key.size=unit(0.25, 'cm')
   )
 ```
-**Note**: Activities are ordered from least to most useful. 
+**Note**: Activities are ordered from most to least useful. 
 
-Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure # displays the **distribution of network members (except hub members) who would recommend this network to a colleague**.
+Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure \@ref(fig:netRec) displays the **distribution of network members (except hub members) who would recommend this network to a colleague**. Note that this figure divides responses by respondents' roles within the network, allowing you to compare across role groups. 
 
-```{r recommend_graph, echo=FALSE, fig.id="netRec"}
+```{r recommend_graph, echo=FALSE, fig.id="netRec", fig.cap=paste("Network Recommendation (n=", recommend_data$Total, "respondents)")}
 rec_graph1<-ggplot(recommend_data, aes(x=recommend))+
-  geom_col()
-
+  geom_bar(aes(y= (..count..)/sum(..count..)), fill = "deepskyblue1")+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Percent of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  theme_classic()
 
 rec_graph2<-ggplot(recommend_data, aes(x=recommend, fill=net_role))+
-  geom_col()
+  geom_bar(aes(y= (..count..)/sum(..count..)))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Percent of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  scale_fill_manual(values=c("navy", "deepskyblue1"))+
+  theme_classic()+  
+  theme(legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
 
-rec_graph3<-ggplot(recommend_data, aes(x=recommend, color=net_role))+
-  geom_freqpoly()
+rec_graph3<-ggplot(recommend_data, aes(x=recommend))+
+  geom_density(fill="deepskyblue1")+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Percent of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  theme_classic()
 
+rec_graph4<-ggplot(recommend_data, aes(x=recommend, group=net_role, fill=net_role))+
+  geom_density(alpha=.6)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Percent of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  scale_fill_manual(values=c("navy", "deepskyblue1"))+
+  theme_classic()+
+  theme(legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+
+rec_graph5<-ggplot(tab_recommend, aes(x=recommend, y=Prop, fill=net_role))+
+  geom_bar(stat="identity", position="dodge")+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Percent of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  scale_fill_manual(values = pal2)+
+  theme_classic()+
+  theme(legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+  
 rec_graph1
+
+rec_graph3
 
 rec_graph2
 
-rec_graph3
+rec_graph4
+
+rec_graph5
 ```
+
+On average, your network members 
 \newpage
 # How do network members perceive participation in local improvement team meetings?
 
@@ -520,7 +594,7 @@ The following questions pertain to those members who indicated they were part of
 meet_freq_plot<-ggplot(tab_meet_freq, aes(x= fct_rev(factor(part_team_meet_32021)), y= Prop))+
   geom_col(fill="deepskyblue1")+
   scale_y_continuous(labels=scales::percent)+
-  scale_x_discrete(labels = scales::wrap_format(15))+
+  scale_x_discrete(labels = scales::wrap_format(15), drop=FALSE)+
   coord_flip()+
   labs (
     title="My local improvement team meets:",
