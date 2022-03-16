@@ -28,9 +28,9 @@ output:
         pre: 'Figure '
         sep: ': '
 params:
-  network_name: New Visions INSI
+  network_name: Denver Public Schools
   engagement: TRUE
-  time: TRUE
+  time: FALSE
   expectations: TRUE
   equity: TRUE
   trust: TRUE
@@ -57,7 +57,7 @@ font_add_google("Merriweather", "merri")
 
 network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/aux_playset.csv")
 
-network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_The%20Instructional%20Network%20for%20School%20Improvement%20(INSI).csv")
+network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_Denver%20Public%20Schools.csv")
 ```
 
 ```{r color_define, include=FALSE}
@@ -188,13 +188,21 @@ tab_useful_ordered<-tab_useful%>%
 ```{r prepare_network_recommend_data, include=FALSE}
 recommend_data<-specific_network_data_2021%>%
   drop_na(recommend)%>%
-  mutate(Total=length(recommend))
+  mutate(Total=length(recommend))%>%
+  mutate(Sum=sum(recommend))
+  
+total_recommend<-length(recommend_data$recommend)
+sum_recommend<-sum(recommend_data$recommend)
+mean_recommend<-round(sum_recommend/total_recommend, 2)
 
 tab_recommend<-recommend_data%>%
   group_by(net_role, recommend)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
+
+mean_recommend
+
 
 ```
 
@@ -326,7 +334,7 @@ Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents va
 race_ethnicity<-ggplot(tab_re, aes(x=fct_reorder(race_ethnicity, Prop, .desc=TRUE), y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   labs (
     title="What is your race/ethnicity?",
     y="Percent of respondents",
@@ -350,7 +358,7 @@ race_ethnicity +
 gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   scale_x_discrete(labels=scales::wrap_format(25))+
   labs (
     title="What is your gender?",
@@ -404,7 +412,7 @@ Figure \@ref(fig:time) displays **how much time network members estimate they sp
 ``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.cap=paste ("Estimated Weekly Network Participation (n=", time_data$Total, "respondents)")}
 time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
   geom_col(fill="deepskyblue1")+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   coord_flip()+
   labs (
     title="How much time do you spend on network activities weekly?",
@@ -431,7 +439,7 @@ Figure \@ref(fig:expect) displays **how much time network members estimate they 
 plot_expect<-ggplot(tab_expect, aes(x=fct_rev(factor(so_part_expec)), y=Prop))+
   geom_col(fill="deepskyblue1")+
   coord_flip()+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   scale_x_discrete(labels=scales::wrap_format(15))+
   labs(
     title="Which statement best describes the amount of time that you are currently spending\non work relate to the network?",
@@ -466,7 +474,7 @@ useful_plot<-tab_useful%>%
   geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), size=3, color="black", fontface="bold", 
             position = position_stack(vjust=.5))+
   scale_x_discrete(labels = scales::wrap_format(25))+
-  scale_y_continuous(labels= scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   labs (
     title="Please indicate how useful each activity is to you.",
     y="Percent of respondents",
@@ -493,8 +501,8 @@ useful_plot+guides(fill=guide_legend(nrow=2))+
 Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure \@ref(fig:netRec) displays the **distribution of network members (except hub members) who would recommend this network to a colleague**. Note that this figure divides responses by respondents' roles within the network, allowing you to compare across role groups. 
 
 ```{r recommend_graph, echo=FALSE, fig.id="netRec", fig.cap=paste("Network Recommendation (n=", recommend_data$Total, "respondents)")}
-rec_graph1<-ggplot(recommend_data, aes(x=recommend))+
-  geom_bar(aes(y= (..count..)/sum(..count..)), fill = "deepskyblue1")+
+rec_graph1<-ggplot(tab_recommend, aes(x=recommend, y=Prop))+
+  geom_col(fill = "deepskyblue1")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   scale_x_continuous(breaks=c(2,4,6,8,10))+
   labs (
@@ -503,21 +511,21 @@ rec_graph1<-ggplot(recommend_data, aes(x=recommend))+
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
   theme_classic()
 
-rec_graph2<-ggplot(recommend_data, aes(x=recommend, fill=net_role))+
-  geom_bar(aes(y= (..count..)/sum(..count..)))+
+rec_graph2<-ggplot(tab_recommend, aes(x=recommend, y=Prop, fill=net_role))+
+  geom_col(position="stack")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   scale_x_continuous(breaks=c(2,4,6,8,10))+
   labs (
     title="Would you recommend this network to a colleague?",
     y="Percent of respondents",
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values=c("navy", "deepskyblue1"))+
+  scale_fill_manual(values=pal3)+
   theme_classic()+  
   theme(legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
 
-rec_graph3<-ggplot(recommend_data, aes(x=recommend))+
+rec_graph3<-ggplot(tab_recommend, aes(x=recommend))+
   geom_density(fill="deepskyblue1")+
   scale_x_continuous(breaks=c(2,4,6,8,10))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
@@ -527,46 +535,72 @@ rec_graph3<-ggplot(recommend_data, aes(x=recommend))+
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
   theme_classic()
 
-rec_graph4<-ggplot(recommend_data, aes(x=recommend, group=net_role, fill=net_role))+
+rec_graph4<-ggplot(tab_recommend, aes(x=recommend, group=net_role, fill=net_role))+
   geom_density(alpha=.6)+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   scale_x_continuous(breaks=c(2,4,6,8,10))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   labs (
     title="Would you recommend this network to a colleague?",
     y="Percent of respondents",
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values=c("navy", "deepskyblue1"))+
+  scale_fill_manual(values=pal3)+
   theme_classic()+
   theme(legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
 
 rec_graph5<-ggplot(tab_recommend, aes(x=recommend, y=Prop, fill=net_role))+
-  geom_bar(stat="identity", position="dodge")+
+  geom_col(position="dodge")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
   scale_x_continuous(breaks=c(2,4,6,8,10))+
   labs (
     title="Would you recommend this network to a colleague?",
     y="Percent of respondents",
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values = pal2)+
+  scale_fill_manual(values = pal3)+
+  theme_classic()+
+  theme(legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+
+rec_graph6<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
+  geom_col(position="stack")+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Number of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  scale_fill_manual(values=pal3)+
+  theme_classic()+  
+  theme(legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+
+rec_graph7<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
+  geom_col(position="dodge")+
+  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  labs (
+    title="Would you recommend this network to a colleague?",
+    y="Number of respondents",
+    x="Network recommendation (1=Certainly not, 10=Certainly)")+
+  scale_fill_manual(values = pal3)+
   theme_classic()+
   theme(legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
   
+rec_graph5
+
+rec_graph6
+
+rec_graph7
+
 rec_graph1
 
-rec_graph3
-
-rec_graph2
-
-rec_graph4
-
-rec_graph5
 ```
 
-On average, your network members 
+On average, network members' likelihood to recommend the network to a colleague was **`r mean_recommend`**. This is an [increase over/is consistent with/is below] network members' likelihood to recommend the network last year, which was 8.0. 
+
 \newpage
 # How do network members perceive participation in local improvement team meetings?
 
@@ -644,8 +678,8 @@ Inquiry routines are a key aspect of the continuous improvement process; however
 
 Figure # displays **the percentage of team members and team leads who indicated they engaged in inquiry cycle routines this year**.
 
-``` {r inqcycle_y_n, echo=FALSE, fig.id="inqcycleyn", fig.cap=paste ("Engagement in Inquiry Cycles (n=", time_data$Total, "respondents)")}
-time_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=TRUE), y= Prop))+
+``` {r inqcycle_y_n, echo=FALSE, fig.id="inqcycleyn", fig.cap=paste ("Engagement in Inquiry Cycles (n=", inqyn_data$Total, "respondents)")}
+inq_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=TRUE), y= Prop))+
   geom_col(fill="deepskyblue1")+
   scale_y_continuous(labels=scales::percent)+
   coord_flip()+
@@ -655,7 +689,7 @@ time_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=
     x="Engagement")+
   theme_classic()+
   theme(plot.title.position="plot")
-time_plot+
+inq_plot+
   geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
