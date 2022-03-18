@@ -28,9 +28,9 @@ output:
         pre: 'Figure '
         sep: ': '
 params:
-  network_name: Denver Public Schools
+  network_name: New Visions INSI
   engagement: TRUE
-  time: FALSE
+  time: TRUE
   expectations: TRUE
   equity: TRUE
   trust: TRUE
@@ -46,6 +46,8 @@ library(readr)
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+library(RColorBrewer)
+library(ggthemes)
 library(scales)
 library(showtext)
 library(flextable)
@@ -61,8 +63,7 @@ network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_rep
 ```
 
 ```{r color_define, include=FALSE}
-pal2<-c("navy", "deepskyblue1")
-pal3<-c("navy", "deepskyblue1", "lightblue1")
+pal4<-c("deepskyblue1", "darkorchid1", "goldenrod1", "forestgreen")
 
 ```
 
@@ -72,20 +73,22 @@ levels=c(1,2,3,4),
 labels=c("Hub leaders", "Other school and district leaders", "Team leads", "Team members"))
 ```
 
-```{r label_race_ethnicity_factors, include=FALSE}
+```{r label_race_ethnicity_factors}
 network_data_2021<-network_data_2021%>%
-  mutate(race_ethnicity=case_when(ethnicity_v3_1==1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Black/African American",
-   ethnicity_v3_1!=1 & ethnicity_v3_2==1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Hispanic/Latino/Latina/Latinx",
-   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3==1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Asian/Hawaiian/Pacific Islander",
-   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4==1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Native American/First Nation",
+  mutate(race_ethnicity=case_when(ethnicity_v3_1==1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Black/ African American",
+   ethnicity_v3_1!=1 & ethnicity_v3_2==1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Hispanic/ Latino/ Latina/ Latinx",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3==1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Asian/ Hawaiian/ Pacific Islander",
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4==1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Native American/ First Nation",
    ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5==1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "White",
    ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6==1 & ethnicity_v3_7!=1 ~ "Prefer not to say",
-   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7==1 ~ "Additional racial/ethnic identity"))
+   ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7==1 ~ "Additional racial/ ethnic identity"))
 network_data_2021<-network_data_2021%>%
-  mutate("race_ethnicity"=replace_na(race_ethnicity, "Multiple racial/ethnic identities"))
+  mutate("race_ethnicity"=replace_na(race_ethnicity, "Multiple racial/ ethnic identities"))
 network_data_2021$race_ethnicity<-factor(network_data_2021$race_ethnicity,
-                                         levels=c("Prefer not to say", "Additional racial/ethnic identity", "Multiple racial/ethnic identities", "White", "Native American/First Nation", "Asian/Hawaiian/Pacific Islander", "Hispanic/Latino/Latina/Latinx", "Black/African American"))
-network_data_2021$race_ethnicity
+                                         levels=c("Prefer not to say", "Additional racial/ethnic identity", "Multiple racial/ethnic identities", "White", "Native American/ First Nation", "Asian/ Hawaiian/ Pacific Islander", "Hispanic/ Latino/ Latina/ Latinx", "Black/ African American"))
+
+is.factor(network_data_2021$race_ethnicity)
+
 specific_network_data_2021<-network_data_2021%>%
   filter(network_name==params$network_name)
 race_data<-specific_network_data_2021%>%
@@ -96,7 +99,12 @@ tab_re<-race_data%>%
   group_by(race_ethnicity)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
-  mutate(Pct=(percent(Prop, accuracy=1)))
+  mutate(Pct=(percent(Prop, accuracy=1)))%>%
+  ungroup()%>%
+  complete(race_ethnicity,
+           fill=list(Freq=0, Prop=0, Pct=0))
+
+tab_re
 ```
 
 ```{r label_gender_factors, include=FALSE}
@@ -217,12 +225,31 @@ team_meet<-specific_network_data_2021%>%
   mutate(Total=length(part_team_meetings_1))
 
 tab_team_meet<-team_meet%>%
+  group_by(part_team_meetings_1, net_role)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
+
+tab_team_meet_donut<-team_meet%>%
+  group_by(net_role, part_team_meetings_1)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))%>%
+  mutate(ymax=cumsum(Prop))%>%
+  mutate(ymin=c(0, head(ymax, n=-1)))
+
+tab_team_meet_ol<-team_meet%>%
+  filter(net_role=="Other school and district leaders")%>%
   group_by(part_team_meetings_1)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))%>%
   mutate(ymax=cumsum(Prop))%>%
   mutate(ymin=c(0, head(ymax, n=-1)))
+
+tab_team_meet_ol
+
+tab_team_meet
 ```
 
 ```{r meeting_frequency_bar, include=FALSE}
@@ -334,7 +361,9 @@ Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents va
 race_ethnicity<-ggplot(tab_re, aes(x=fct_reorder(race_ethnicity, Prop, .desc=TRUE), y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
+  scale_x_discrete(drop=FALSE, labels=scales::wrap_format(25))+
   labs (
     title="What is your race/ethnicity?",
     y="Percent of respondents",
@@ -343,7 +372,6 @@ race_ethnicity<-ggplot(tab_re, aes(x=fct_reorder(race_ethnicity, Prop, .desc=TRU
   theme_classic()+
   theme(plot.title.position="plot")
 race_ethnicity + 
-  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -351,7 +379,7 @@ race_ethnicity +
   axis.text.y=element_text(family="sans", size=8, color="black"),
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
-```  
+```      
 **Note**: Racial/ethnic categories are ordered from lowest to highest respondent group. 
 
 ```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.cap=paste("Survey Respondents by Gender (n=", gender_data$Total, "respondents)")}
@@ -359,7 +387,7 @@ gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Pro
   geom_col(fill="deepskyblue1") +
   coord_flip()+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
-  scale_x_discrete(labels=scales::wrap_format(25))+
+  scale_x_discrete(drop=FALSE, labels=scales::wrap_format(25))+
   labs (
     title="What is your gender?",
     x="Gender",
@@ -368,7 +396,7 @@ gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Pro
   theme_classic()+
   theme(plot.title.position="plot")
 gender + 
-  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -378,6 +406,9 @@ gender +
 )
 ``` 
 **Note**: Gender categories are ordered from lowest to highest respondent group. 
+
+You'll notice on these figures and throughout the report, we list the sample size (n) for each question. These sample sizes vary between questions for two reasons: (1) Some questions were only asked of particular role groups (e.g., network members and team leads); (2) Some individuals skipped questions while taking the survey.
+We've specified when questions only pertain to certain role groups throughout the report to aid your interpretation of the data. 
 
 \newpage
 # How do network members view network leadership?
@@ -412,7 +443,7 @@ Figure \@ref(fig:time) displays **how much time network members estimate they sp
 ``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.cap=paste ("Estimated Weekly Network Participation (n=", time_data$Total, "respondents)")}
 time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
   geom_col(fill="deepskyblue1")+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   coord_flip()+
   labs (
     title="How much time do you spend on network activities weekly?",
@@ -439,7 +470,7 @@ Figure \@ref(fig:expect) displays **how much time network members estimate they 
 plot_expect<-ggplot(tab_expect, aes(x=fct_rev(factor(so_part_expec)), y=Prop))+
   geom_col(fill="deepskyblue1")+
   coord_flip()+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   scale_x_discrete(labels=scales::wrap_format(15))+
   labs(
     title="Which statement best describes the amount of time that you are currently spending\non work relate to the network?",
@@ -479,20 +510,22 @@ useful_plot<-tab_useful%>%
     title="Please indicate how useful each activity is to you.",
     y="Percent of respondents",
     x="Network activities")+
-  scale_fill_brewer(direction=-1, breaks=c("N/A; haven't done this year", "Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful"))+
+  scale_fill_brewer(palette="PuBu", direction=-1, breaks=c("N/A; haven't done this year", "Not at all useful", "A little bit useful", "Moderately useful", "Useful", "Very useful"))+
   theme_classic()+
   theme(plot.title.position="plot",
         legend.position= "bottom",
+        legend.box="horizontal",
+        legend.spacing.x=(unit(0.1, 'cm')),
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
-useful_plot+guides(fill=guide_legend(nrow=2))+
+useful_plot+guides(fill=guide_legend(nrow=1))+
   theme(
     plot.title = element_text(family="sans", size=10, face="bold.italic"),
     axis.title.y = element_text(family="sans", size=10, color="black"),
     axis.title.x = element_text(family="sans", size=10, color="black"),
     axis.text.y=element_text(family="sans", size=8, color="black"),
     axis.text.x=element_text(family="sans", size=8, color="black"),
-    legend.text=element_text(size=8),
+    legend.text=element_text(size=6),
     legend.key.size=unit(0.25, 'cm')
   )
 ```
@@ -501,101 +534,22 @@ useful_plot+guides(fill=guide_legend(nrow=2))+
 Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure \@ref(fig:netRec) displays the **distribution of network members (except hub members) who would recommend this network to a colleague**. Note that this figure divides responses by respondents' roles within the network, allowing you to compare across role groups. 
 
 ```{r recommend_graph, echo=FALSE, fig.id="netRec", fig.cap=paste("Network Recommendation (n=", recommend_data$Total, "respondents)")}
-rec_graph1<-ggplot(tab_recommend, aes(x=recommend, y=Prop))+
-  geom_col(fill = "deepskyblue1")+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
-  labs (
-    title="Would you recommend this network to a colleague?",
-    y="Percent of respondents",
-    x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  theme_classic()
 
-rec_graph2<-ggplot(tab_recommend, aes(x=recommend, y=Prop, fill=net_role))+
+rec_graph<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
   geom_col(position="stack")+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
-  labs (
-    title="Would you recommend this network to a colleague?",
-    y="Percent of respondents",
-    x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values=pal3)+
-  theme_classic()+  
-  theme(legend.position="bottom",
-        legend.background=element_rect(fill="gray100", color="black"),
-        legend.title=element_blank())
-
-rec_graph3<-ggplot(tab_recommend, aes(x=recommend))+
-  geom_density(fill="deepskyblue1")+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
-  labs (
-    title="Would you recommend this network to a colleague?",
-    y="Percent of respondents",
-    x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  theme_classic()
-
-rec_graph4<-ggplot(tab_recommend, aes(x=recommend, group=net_role, fill=net_role))+
-  geom_density(alpha=.6)+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
-  labs (
-    title="Would you recommend this network to a colleague?",
-    y="Percent of respondents",
-    x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values=pal3)+
-  theme_classic()+
-  theme(legend.position="bottom",
-        legend.background=element_rect(fill="gray100", color="black"),
-        legend.title=element_blank())
-
-rec_graph5<-ggplot(tab_recommend, aes(x=recommend, y=Prop, fill=net_role))+
-  geom_col(position="dodge")+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
-  labs (
-    title="Would you recommend this network to a colleague?",
-    y="Percent of respondents",
-    x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values = pal3)+
-  theme_classic()+
-  theme(legend.position="bottom",
-        legend.background=element_rect(fill="gray100", color="black"),
-        legend.title=element_blank())
-
-rec_graph6<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
-  geom_col(position="stack")+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
+  scale_x_continuous(breaks=extended_breaks(10))+
   labs (
     title="Would you recommend this network to a colleague?",
     y="Number of respondents",
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values=pal3)+
+  scale_fill_manual(values=pal4)+
   theme_classic()+  
   theme(legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
-        legend.title=element_blank())
+        legend.title=element_blank(),
+        panel.grid.major.y = element_line(color="grey", size=0.25))
 
-rec_graph7<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
-  geom_col(position="dodge")+
-  scale_x_continuous(breaks=c(2,4,6,8,10))+
-  labs (
-    title="Would you recommend this network to a colleague?",
-    y="Number of respondents",
-    x="Network recommendation (1=Certainly not, 10=Certainly)")+
-  scale_fill_manual(values = pal3)+
-  theme_classic()+
-  theme(legend.position="bottom",
-        legend.background=element_rect(fill="gray100", color="black"),
-        legend.title=element_blank())
-  
-rec_graph5
-
-rec_graph6
-
-rec_graph7
-
-rec_graph1
+rec_graph
 
 ```
 
@@ -610,7 +564,7 @@ Figure \@ref(fig:teamDonut) displays **the percentage of members (excluding the 
 
 ```{r team_meetings_donut, echo=FALSE, fig.id="teamDonut", fig.height=2, fig.cap=paste ("Percentage of Members who Report Participating in Local Improvement Team Meetings (n=", team_meet$Total, "respondents)")}
 
-meetings_donut <- ggplot(tab_team_meet) +
+meetings_donut <- ggplot(tab_team_meet_donut) +
     geom_rect(aes(xmin=2, xmax=4, ymin=ymin, ymax=ymax, fill=part_team_meetings_1)) +
     coord_polar(theta="y", start=0, direction=1) +
     xlim(c(0, 5)) +
@@ -620,14 +574,30 @@ meetings_donut <- ggplot(tab_team_meet) +
     theme_void() +
     theme(legend.position="none")
 
+meetings_donut<-meetings_donut+facet_grid(~net_role)
 meetings_donut
+
+meetings_stack<-ggplot(tab_team_meet, aes(x=part_team_meetings_1, y=Prop, fill=net_role))+
+  geom_col(position=position_stack())+
+  coord_flip()+
+  labs (
+    title="Participation",
+    y="Percent of respondents",
+    x="Participation")+
+  scale_fill_manual(values=pal4)+
+  theme_classic()+  
+  theme(legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+
+meetings_stack
 ```
 The following questions pertain to those members who indicated they were part of a local improvement team. Figure \@ref(fig:meetFreq) displays **how frequently local improvement team meetings occur** while Figure \@ref(fig:meetPart) displays **how often members report participating in local improvement team meetings**.
 
 ``` {r team_meet_freq, echo=FALSE, fig.id="meetFreq", fig.cap=paste ("Frequency of Local Improvement Team Meetings (n=", meet_freq_data$Total, "respondents)")}
 meet_freq_plot<-ggplot(tab_meet_freq, aes(x= fct_rev(factor(part_team_meet_32021)), y= Prop))+
   geom_col(fill="deepskyblue1")+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
   scale_x_discrete(labels = scales::wrap_format(15), drop=FALSE)+
   coord_flip()+
   labs (
@@ -650,7 +620,7 @@ meet_freq_plot+
 ``` {r team_meet_part, echo=FALSE, fig.id="meetPart", fig.cap=paste ("Participation in Local Improvement Team Meetings (n=", meet_part_data$Total, "respondents)")}
 meet_freq_plot<-ggplot(tab_meet_part, aes(x= fct_rev(factor(part_team_meetings_2)), y= Prop))+
   geom_col(fill="deepskyblue1")+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
   scale_x_discrete(labels = scales::wrap_format(15))+
   coord_flip()+
   labs (
@@ -681,7 +651,7 @@ Figure # displays **the percentage of team members and team leads who indicated 
 ``` {r inqcycle_y_n, echo=FALSE, fig.id="inqcycleyn", fig.cap=paste ("Engagement in Inquiry Cycles (n=", inqyn_data$Total, "respondents)")}
 inq_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=TRUE), y= Prop))+
   geom_col(fill="deepskyblue1")+
-  scale_y_continuous(labels=scales::percent)+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
   coord_flip()+
   labs (
     title="Have you engaged in any inquiry routines this school year?",
