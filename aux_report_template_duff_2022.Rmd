@@ -155,7 +155,7 @@ tab_expect<-expect_data%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 ```
-
+#Trying to work on the viz of time committed and time expectation
 ```{r prepare_util_stackedbars, include=FALSE}
 
 useful_data<-specific_network_data_2021%>%
