@@ -73,7 +73,7 @@ levels=c(1,2,3,4),
 labels=c("Hub leaders", "Other school and district leaders", "Team leads", "Team members"))
 ```
 
-```{r label_race_ethnicity_factors}
+```{r label_race_ethnicity_factors, include=FALSE}
 network_data_2021<-network_data_2021%>%
   mutate(race_ethnicity=case_when(ethnicity_v3_1==1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Black/ African American",
    ethnicity_v3_1!=1 & ethnicity_v3_2==1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Hispanic/ Latino/ Latina/ Latinx",
@@ -99,10 +99,10 @@ tab_re<-race_data%>%
   group_by(race_ethnicity)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
-  mutate(Pct=(percent(Prop, accuracy=1)))%>%
   ungroup()%>%
   complete(race_ethnicity,
-           fill=list(Freq=0, Prop=0, Pct=0))
+           fill=list(Freq=0, Prop=0))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
 
 tab_re
 ```
@@ -121,7 +121,46 @@ tab_gender<-gender_data%>%
   group_by(gender_v3)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
+  ungroup()%>%
+  complete(gender_v3,
+           fill=list(Freq=0, Prop=0))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
+```
+
+```{r prepare_nlgroupcom_stackedbars, include=FALSE}
+
+groupcom_data<-specific_network_data_2021%>%
+  pivot_longer(nl_netops_groupcom_1:nl_netops_groupcom_3, names_to="names_gcom", values_to="values_gcom")
+
+groupcom_data$names_gcom<-as.factor(groupcom_data$names_gcom)
+groupcom_data$names_gcom<-
+  fct_recode(groupcom_data$names_gcom, 
+         "Within our local improvement team" = "nl_netops_groupcom_1", 
+         "With network leaders" = "nl_netops_groupcom_2",
+         "With other participating district or school-based improvement teams" = "nl_netops_groupcom_3"
+  )
+
+groupcom_data$values_gcom<-factor(groupcom_data$values_gcom, 
+          levels=c(1,2,3,4),
+          labels=c("Not enough", "Just right", "Too much", 
+                   "Not applicable"))
+groupcom_data$values_gcom<-relevel(groupcom_data$values_gcom, "Not applicable")
+
+groupcom_data<-groupcom_data%>%
+  drop_na(values_gcom)%>%
+  mutate(Total=length(values_gcom)/3)
+
+tab_gcom<-groupcom_data%>%
+  group_by(names_gcom, values_gcom)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
+
+tab_gcom_ordered<-tab_gcom%>%
+  filter(values_gcom=="Just right")%>%
+  arrange(Prop)%>%
+  extract2("names_gcom")
+
 ```
 
 ```{r prepare_time_bars, include=FALSE}
@@ -284,6 +323,41 @@ tab_meet_part<-meet_part_data%>%
   mutate(Pct=percent(Prop, accuracy=1))
 ```
 
+```{r prepare_equitydis_stackedbars, include=FALSE}
+
+eqdis_data<-specific_network_data_2021%>%
+  pivot_longer(equity_dis_1:equity_dis_3, names_to="names_eqdis", values_to="values_eqdis")
+
+eqdis_data$names_eqdis<-as.factor(eqdis_data$names_eqdis)
+eqdis_data$names_eqdis<-
+  fct_recode(eqdis_data$names_eqdis, 
+         "How race and racism operate in our improvement work" = "equity_dis_1", 
+         "How gender and misogyny operate in our improvement work" = "equity_dis_2",
+         "How class and classism operate in our improvement work" = "equity_dis_3"
+  )
+
+eqdis_data$values_eqdis<-factor(eqdis_data$values_eqdis, 
+          levels=c(1,2,3,4,5),
+          labels=c("Never", "Every 3 months or less", "Every other month", 
+                   "Once a month", "More than once a month"))
+
+eqdis_data<-eqdis_data%>%
+  drop_na(values_eqdis)%>%
+  mutate(Total=length(values_eqdis)/3)
+
+tab_eqdis<-eqdis_data%>%
+  group_by(names_eqdis, values_eqdis)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
+
+tab_eqdis_ordered<-tab_eqdis%>%
+  filter(values_eqdis=="More than once a month")%>%
+  arrange(Prop)%>%
+  extract2("names_eqdis")
+
+```
+
 ```{r prepare_inquiry_yn_bars, include=FALSE}
 specific_network_data_2021$is_inqcyclechal_y_n<-factor(specific_network_data_2021$is_inqcyclechal_y_n,
 levels=c(1,2,3),
@@ -295,6 +369,12 @@ inqyn_data<-specific_network_data_2021%>%
 
 tab_inqyn<-inqyn_data%>%
   group_by(is_inqcyclechal_y_n)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))
+
+tab_inqyn_role<-inqyn_data%>%
+  group_by(net_role, is_inqcyclechal_y_n)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
@@ -386,7 +466,7 @@ race_ethnicity +
 gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Prop)) +
   geom_col(fill="deepskyblue1") +
   coord_flip()+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L))+
+  scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   scale_x_discrete(drop=FALSE, labels=scales::wrap_format(25))+
   labs (
     title="What is your gender?",
@@ -427,8 +507,38 @@ Figure # displays the **percentage of network members who know who their network
 
 Finally, Figure # displays **how network members feel about communication with various sources in the network**. Note, these data are for all network members, regardless of whether they know who their leaders are.
 
-[INSERT NL_NETOPS_GROUPCOM_n HERE (FIGURE #)]
+``` {r group_communication, echo=FALSE, fig.height=4, fig.id="gcom", fig.cap=paste("Amount of Communication with Network Sources (n=", groupcom_data$Total, "respondents)")}
 
+gcom_plot<-tab_gcom%>%
+  mutate(names_gcom=factor(names_gcom, tab_gcom_ordered))%>%
+           ggplot(aes(x=names_gcom, y=Prop, fill=fct_rev(values_gcom)))+
+  geom_col(position=position_stack())+
+  coord_flip()+
+  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), size=3, color="black", fontface="bold", 
+            position = position_stack(vjust=.5))+
+  scale_x_discrete(labels = scales::wrap_format(25))+
+  scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
+  labs (
+    title="What best describes your feelings about the amount of communication with the following sources?",
+    y="Percent of respondents",
+    x="Types of communication")+
+  scale_fill_brewer(palette="PuBu", direction=-1, breaks=c("Not applicable", "Not enough", "Just right", "Too much"))+
+  theme_classic()+
+  theme(plot.title.position="plot",
+        legend.position= "bottom",
+        legend.box="horizontal",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+gcom_plot+guides(fill=guide_legend(nrow=1))+
+  theme(
+    plot.title = element_text(family="sans", size=10, face="bold.italic"),
+    axis.title.y = element_text(family="sans", size=10, color="black"),
+    axis.title.x = element_text(family="sans", size=10, color="black"),
+    axis.text.y=element_text(family="sans", size=8, color="black"),
+    axis.text.x=element_text(family="sans", size=8, color="black"),
+    legend.text=element_text(size=8)  
+    )
+```
 Together, these data show how well your members know and understand the function of leaders in your network. If your results are lower than you would expect on these measures, consider whether you can do anything to bolster connections with and support from network leaders.
 
 \newpage
@@ -443,6 +553,7 @@ Figure \@ref(fig:time) displays **how much time network members estimate they sp
 ``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.cap=paste ("Estimated Weekly Network Participation (n=", time_data$Total, "respondents)")}
 time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
   geom_col(fill="deepskyblue1")+
+  scale_x_discrete(drop=FALSE)+
   scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   coord_flip()+
   labs (
@@ -452,7 +563,7 @@ time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
   theme_classic()+
   theme(plot.title.position="plot")
 time_plot+
-  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -471,7 +582,7 @@ plot_expect<-ggplot(tab_expect, aes(x=fct_rev(factor(so_part_expec)), y=Prop))+
   geom_col(fill="deepskyblue1")+
   coord_flip()+
   scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
-  scale_x_discrete(labels=scales::wrap_format(15))+
+  scale_x_discrete(drop=FALSE, labels=scales::wrap_format(15))+
   labs(
     title="Which statement best describes the amount of time that you are currently spending\non work relate to the network?",
     y="Percent of respondents",
@@ -480,7 +591,7 @@ plot_expect<-ggplot(tab_expect, aes(x=fct_rev(factor(so_part_expec)), y=Prop))+
   theme_classic()+
   theme(plot.title.position="plot")
 plot_expect+
-  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -544,12 +655,19 @@ rec_graph<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
     x="Network recommendation (1=Certainly not, 10=Certainly)")+
   scale_fill_manual(values=pal4)+
   theme_classic()+  
-  theme(legend.position="bottom",
+  theme(plot.title.position="plot",
+        legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank(),
         panel.grid.major.y = element_line(color="grey", size=0.25))
 
-rec_graph
+rec_graph + theme(
+    plot.title = element_text(family="sans", size=10, face="bold.italic"),
+    axis.title.y = element_text(family="sans", size=10, color="black"),
+    axis.title.x = element_text(family="sans", size=10, color="black"),
+    axis.text.y=element_text(family="sans", size=8, color="black"),
+    axis.text.x=element_text(family="sans", size=8, color="black")
+  )
 
 ```
 
@@ -560,10 +678,11 @@ On average, network members' likelihood to recommend the network to a colleague 
 
 Consistency of network participation is important to building internal team connections and helping improvement to flourish. Team meetings need to occur frequently enough to maintain momentum around network goals and allow for collaborative problem solving and discussion. However, if network meetings occur too frequently, members may not be able to consistently attend. 
 
-Figure \@ref(fig:teamDonut) displays **the percentage of members (excluding the network hub) who indicated they are part of a local improvement team**.  
+Figure \@ref(fig:teamDonut) displays **the number of members (excluding the network hub) who indicated they are part of a local improvement team**.  
 
-```{r team_meetings_donut, echo=FALSE, fig.id="teamDonut", fig.height=2, fig.cap=paste ("Percentage of Members who Report Participating in Local Improvement Team Meetings (n=", team_meet$Total, "respondents)")}
+```{r team_meetings_donut, echo=FALSE, fig.id="teamDonut", fig.height=2, fig.cap=paste ("Number of Members who Report Participating in Local Improvement Team Meetings (n=", team_meet$Total, "respondents)")}
 
+#Note we don't use this first one, but keeping the code here just in case!
 meetings_donut <- ggplot(tab_team_meet_donut) +
     geom_rect(aes(xmin=2, xmax=4, ymin=ymin, ymax=ymax, fill=part_team_meetings_1)) +
     coord_polar(theta="y", start=0, direction=1) +
@@ -574,23 +693,27 @@ meetings_donut <- ggplot(tab_team_meet_donut) +
     theme_void() +
     theme(legend.position="none")
 
-meetings_donut<-meetings_donut+facet_grid(~net_role)
-meetings_donut
-
-meetings_stack<-ggplot(tab_team_meet, aes(x=part_team_meetings_1, y=Prop, fill=net_role))+
-  geom_col(position=position_stack())+
+meetings_stack<-ggplot(tab_team_meet, aes(x=part_team_meetings_1, y=Freq, fill=net_role))+
+  geom_col(position="stack")+
   coord_flip()+
   labs (
     title="Participation",
-    y="Percent of respondents",
+    y="Number of respondents",
     x="Participation")+
   scale_fill_manual(values=pal4)+
   theme_classic()+  
-  theme(legend.position="bottom",
+  theme(plot.title.position="plot",
+        legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
 
-meetings_stack
+meetings_stack + theme(
+    plot.title = element_text(family="sans", size=10, face="bold.italic"),
+    axis.title.y = element_text(family="sans", size=10, color="black"),
+    axis.title.x = element_text(family="sans", size=10, color="black"),
+    axis.text.y=element_text(family="sans", size=8, color="black"),
+    axis.text.x=element_text(family="sans", size=8, color="black"),
+  )
 ```
 The following questions pertain to those members who indicated they were part of a local improvement team. Figure \@ref(fig:meetFreq) displays **how frequently local improvement team meetings occur** while Figure \@ref(fig:meetPart) displays **how often members report participating in local improvement team meetings**.
 
@@ -607,7 +730,7 @@ meet_freq_plot<-ggplot(tab_meet_freq, aes(x= fct_rev(factor(part_team_meet_32021
   theme_classic()+
   theme(plot.title.position="plot")
 meet_freq_plot+
-  geom_text(aes(label=ifelse(Prop > 0.05, Pct, "")), hjust=1.5, fontface="bold")+
+  geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
   axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -642,11 +765,15 @@ meet_freq_plot+
 
 `r if(params$equity){"Additionally, it is important to not only consider frequency and attendance within improvement team meetings, but also the content of those meetings, or what members typically do or discuss when in attendance. Figure # displays members’ perceptions of the **frequency with which they discuss various topics related to equity during local improvement team meetings**. Given the centrality of diversity, equity, and inclusion to network improvement, consider whether local improvement teams need additional support around how to center equity in team meetings moving forward."}`
 
+[INSERT EQUITY_DIS_n HERE (FIGURE #)]
+
 `r if(params$trust){"Finally, Figure # displays **network members’ perceptions of relational trust within local improvement teams**. Consider whether this is sufficient to engage in productive dialogue and improvement routines."}`
+
+[INSERT SO_RT_n HERE (FIGURE #)]
 
 Inquiry routines are a key aspect of the continuous improvement process; however, they can be difficult to implement and master. These data summarize the degree to which your network members find various aspects of inquiry routines challenging.
 
-Figure # displays **the percentage of team members and team leads who indicated they engaged in inquiry cycle routines this year**.
+Figure \@ref(fig:inqcycleyn) displays **the number of team members and team leads who indicated they engaged in inquiry cycle routines this year**.
 
 ``` {r inqcycle_y_n, echo=FALSE, fig.id="inqcycleyn", fig.cap=paste ("Engagement in Inquiry Cycles (n=", inqyn_data$Total, "respondents)")}
 inq_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=TRUE), y= Prop))+
@@ -669,7 +796,36 @@ inq_plot+
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
 ```
+
+Figure \@ref(fig:inqcycNr) shows this same data disaggregated by network role.
+```{r inqcycle_by_role, echo=FALSE, fig.id="inqcycNr", fig.cap=paste ("Engagement in Inquiry Cycles by Network Role (n=", inqyn_data$Total, "respondents)")}
+inq_stack<-ggplot(tab_inqyn_role, aes(x=fct_reorder(is_inqcyclechal_y_n, Freq, .desc=TRUE), y=Freq, fill=net_role))+
+  geom_col(position="stack")+
+  coord_flip()+
+  labs (
+    title="Have you engaged in any inquiry routines this school year?",
+    y="Number of respondents",
+    x="Engagement")+
+  scale_fill_manual(values=pal4)+
+  theme_classic()+  
+  theme(plot.title.position="plot",
+        legend.position="bottom",
+        legend.background=element_rect(fill="gray100", color="black"),
+        legend.title=element_blank())
+
+inq_stack+
+  theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
+
+```
 The remaining data in this section provide further insights from those members who shared that they do participate in inquiry routines. Team members and team leads were asked to **indicate the extent to which they found various aspects of inquiry routines challenging** (Figure #). Within your network, we found the following responses:
+
+[INSERT IS_INQCYCLECHAL_12021, IS_INQCYCLECHAL_52021, IS_INQCYCLECHAL_32021, IS_INQCYCLECHAL_42021, IS_INQCYCLECHAL_82021 HERE (FIGURE #)]
 
 While we anticipate a learning curve in mastering inquiry routines, if these responses are lower than you would expect, consider any additional steps the network hub can take to support members around challenging aspects of the work. Note also those aspects of inquiry routines members said were not applicable to their practice. Are these practices you would expect members to be familiar with?
 
