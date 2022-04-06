@@ -249,8 +249,6 @@ tab_recommend<-recommend_data%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 
 mean_recommend
-
-
 ```
 
 ```{r prepare_improvementteam_yn_donut, include=FALSE}
@@ -378,6 +376,16 @@ tab_inqyn_role<-inqyn_data%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
+```
+
+```{r prepare_leader_sustain_yn, include=FALSE, eval=FALSE}
+specific_network_data_2021$sus_begun_planning<-factor(specific_network_data_2021$sus_begun_planning,
+levels=c(1,2,3),
+labels=c("Yes", "No", "Unsure"))
+
+sus_plan_data<-specific_network_data_2021%>%
+  drop_na(sus_begun_planning)%>%
+  mutate(Total=length(sus_begun_planning))
 ```
 \
 \
