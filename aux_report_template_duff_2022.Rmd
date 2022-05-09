@@ -57,7 +57,7 @@ library(magrittr)
 library(officedown)
 font_add_google("Merriweather", "merri")
 
-network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/aux_playset.csv")
+network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/DPS-cleaned and deidentified.csv")
 
 network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_Denver%20Public%20Schools.csv")
 ```
