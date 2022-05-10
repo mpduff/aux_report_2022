@@ -28,13 +28,16 @@ output:
         pre: 'Figure '
         sep: ': '
 params:
-  network_name: New Visions INSI
-  engagement: TRUE
-  time: TRUE
-  expectations: TRUE
-  equity: TRUE
-  trust: TRUE
-  state: FALSE
+  network_name: "Denver Public Schools: The College Ready On Track Network"
+  leaders_engage: FALSE
+  leaders_networkcomms: FALSE
+  nre_useful: TRUE
+  nre_intensity: FALSE
+  nre_expectations: TRUE
+  ic_equity: FALSE
+  ic_trust: FALSE
+  sa_state: FALSE
+  network_2021: DPS
 ---
 
 ```{r setup, include=FALSE} 
@@ -56,25 +59,43 @@ library(forcats)
 library(magrittr)
 library(officedown)
 font_add_google("Merriweather", "merri")
-
-network_data_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/DPS-cleaned and deidentified.csv")
-
-network_roster_2021<- read_csv("https://raw.githubusercontent.com/mpduff/aux_report_2022/main/roster_Denver%20Public%20Schools.csv")
+network_data_2022<- read_csv("DPS-cleaned and deidentified.csv")
+network_data_2021<- read_csv("aux_playset.csv")
+network_roster_2021<- read_csv("roster_Denver Public Schools.csv")
+network_roster_2022<- read_csv("roster_dps_2022.csv")
 ```
 
 ```{r color_define, include=FALSE}
 pal4<-c("deepskyblue1", "darkorchid1", "goldenrod1", "forestgreen")
-
 ```
 
 ```{r label_role_group_factors, include=FALSE}
-network_data_2021$net_role<-factor(network_data_2021$net_role,
-levels=c(1,2,3,4),
-labels=c("Hub leaders", "Other school and district leaders", "Team leads", "Team members"))
+network_data_2022$net_role<-factor(network_data_2022$net_role,
+levels=c(111,112,113,114),
+labels=c("Hub members responsible for organization and leading the network", 
+         "Central office staff supporting the network", 
+         "School team leads", 
+         "School site improvement team members"))
+
+role_group_data<-network_data_2022%>%
+  drop_na(net_role)%>%
+  mutate(Total=length(net_role))
+tab_role_group<-role_group_data%>%
+  group_by(net_role)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=(percent(Prop, accuracy=1)))  
 ```
 
 ```{r label_race_ethnicity_factors, include=FALSE}
-network_data_2021<-network_data_2021%>%
+network_data_2022<-network_data_2022%>%
+  mutate(ethnicity_v3_1=ifelse(is.na(ethnicity_v3_1), 0, ethnicity_v3_1),
+         ethnicity_v3_2=ifelse(is.na(ethnicity_v3_2), 0, ethnicity_v3_2),
+         ethnicity_v3_3=ifelse(is.na(ethnicity_v3_3), 0, ethnicity_v3_3),
+         ethnicity_v3_4=ifelse(is.na(ethnicity_v3_4), 0, ethnicity_v3_4),
+         ethnicity_v3_5=ifelse(is.na(ethnicity_v3_5), 0, ethnicity_v3_5),
+         ethnicity_v3_6=ifelse(is.na(ethnicity_v3_6), 0, ethnicity_v3_6),
+         ethnicity_v3_7=ifelse(is.na(ethnicity_v3_7), 0, ethnicity_v3_7))%>%
   mutate(race_ethnicity=case_when(ethnicity_v3_1==1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Black/ African American",
    ethnicity_v3_1!=1 & ethnicity_v3_2==1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Hispanic/ Latino/ Latina/ Latinx",
    ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3==1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "Asian/ Hawaiian/ Pacific Islander",
@@ -82,19 +103,19 @@ network_data_2021<-network_data_2021%>%
    ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5==1 & ethnicity_v3_6!=1 & ethnicity_v3_7!=1 ~ "White",
    ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6==1 & ethnicity_v3_7!=1 ~ "Prefer not to say",
    ethnicity_v3_1!=1 & ethnicity_v3_2!=1 & ethnicity_v3_3!=1 & ethnicity_v3_4!=1 & ethnicity_v3_5!=1 & ethnicity_v3_6!=1 & ethnicity_v3_7==1 ~ "Additional racial/ ethnic identity"))
-network_data_2021<-network_data_2021%>%
-  mutate("race_ethnicity"=replace_na(race_ethnicity, "Multiple racial/ ethnic identities"))
-network_data_2021$race_ethnicity<-factor(network_data_2021$race_ethnicity,
-                                         levels=c("Prefer not to say", "Additional racial/ethnic identity", "Multiple racial/ethnic identities", "White", "Native American/ First Nation", "Asian/ Hawaiian/ Pacific Islander", "Hispanic/ Latino/ Latina/ Latinx", "Black/ African American"))
+network_data_2022<-network_data_2022%>%
+  mutate("race_ethnicity"=replace_na(race_ethnicity, "Multiple racial/ ethnic identities"))%>%
+  mutate(ethnicity_v3=sum(ethnicity_v3_1:ethnicity_v3_7))
+network_data_2022$race_ethnicity<-as.factor(network_data_2022$race_ethnicity)
 
-is.factor(network_data_2021$race_ethnicity)
+network_data_2022$race_ethnicity<-fct_relevel(network_data_2022$race_ethnicity,
+                                         "Prefer not to say", "Additional racial/ethnic identity", "Multiple racial/ethnic identities", "White", "Native American/ First Nation", "Asian/ Hawaiian/ Pacific Islander", "Hispanic/ Latino/ Latina/ Latinx", "Black/ African American")
 
-specific_network_data_2021<-network_data_2021%>%
-  filter(network_name==params$network_name)
-race_data<-specific_network_data_2021%>%
+network_data_2022$race_ethnicity
+
+race_data<-network_data_2022%>%
   drop_na(ethnicity_v3)%>%
   mutate(Total=length(ethnicity_v3))
-
 tab_re<-race_data%>%
   group_by(race_ethnicity)%>%
   summarize(Freq=n())%>%
@@ -103,20 +124,17 @@ tab_re<-race_data%>%
   complete(race_ethnicity,
            fill=list(Freq=0, Prop=0))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 tab_re
 ```
 
 ```{r label_gender_factors, include=FALSE}
-specific_network_data_2021$gender_v3
-specific_network_data_2021$gender_v3<-factor(specific_network_data_2021$gender_v3,
+network_data_2022$gender_v3
+network_data_2022$gender_v3<-factor(network_data_2022$gender_v3,
 levels=c(1,2,3,4,5),
 labels=c("Man", "Woman", "Gender queer/Gender non-conforming", "Identity not mentioned", "Prefer not to say"))
-
-gender_data<-specific_network_data_2021%>%
+gender_data<-network_data_2022%>%
   drop_na(gender_v3)%>%
   mutate(Total=length(gender_v3))
-
 tab_gender<-gender_data%>%
   group_by(gender_v3)%>%
   summarize(Freq=n())%>%
@@ -127,11 +145,28 @@ tab_gender<-gender_data%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 
-```{r prepare_nlgroupcom_stackedbars, include=FALSE}
+```{r prepare_knowleaders}
+network_data_2022$nl_background_1<-factor(network_data_2022$nl_background_1,
+                                          levels=c(1,2,3),
+                                          labels=c("Yes, I know who the network leaders are",
+                                                   "I think I know who the network leaders are, but I am not sure",
+                                                   "I do not know who the network leaders are"))
+know_leaders_data<-network_data_2022%>%
+  drop_na(nl_background_1)%>%
+  mutate(Total=length(nl_background_1))
 
-groupcom_data<-specific_network_data_2021%>%
+know_leaders_data
+
+tab_know_leaders<-know_leaders_data%%
+  group_by(nl_background_1)%>%
+  summarize(Freq=n())%>%
+  mutate(Prop=Freq/sum(Freq))%>%
+  mutate(Pct=percent(Prop, accuracy=1))
+```
+
+```{r prepare_nlgroupcom_stackedbars, include=FALSE, eval=params$leaders_networkcomms}
+groupcom_data<-network_data_2022%>%
   pivot_longer(nl_netops_groupcom_1:nl_netops_groupcom_3, names_to="names_gcom", values_to="values_gcom")
-
 groupcom_data$names_gcom<-as.factor(groupcom_data$names_gcom)
 groupcom_data$names_gcom<-
   fct_recode(groupcom_data$names_gcom, 
@@ -139,39 +174,32 @@ groupcom_data$names_gcom<-
          "With network leaders" = "nl_netops_groupcom_2",
          "With other participating district or school-based improvement teams" = "nl_netops_groupcom_3"
   )
-
 groupcom_data$values_gcom<-factor(groupcom_data$values_gcom, 
           levels=c(1,2,3,4),
           labels=c("Not enough", "Just right", "Too much", 
                    "Not applicable"))
 groupcom_data$values_gcom<-relevel(groupcom_data$values_gcom, "Not applicable")
-
 groupcom_data<-groupcom_data%>%
   drop_na(values_gcom)%>%
   mutate(Total=length(values_gcom)/3)
-
 tab_gcom<-groupcom_data%>%
   group_by(names_gcom, values_gcom)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 tab_gcom_ordered<-tab_gcom%>%
   filter(values_gcom=="Just right")%>%
   arrange(Prop)%>%
   extract2("names_gcom")
-
 ```
 
-```{r prepare_time_bars, include=FALSE}
-specific_network_data_2021$so_part_t<-factor(specific_network_data_2021$so_part_t,
+```{r prepare_time_bars, include=FALSE, eval=params$nre_intensity}
+network_data_2022$so_part_t<-factor(network_data_2022$so_part_t,
                                     levels=c(1,2,3,4,5,6,7),
                                     labels=c("0-15 minutes", "16-30 minutes", "31-45 minutes", "46-60 minutes", "61-75 minutes", "76-90 minutes", "more than 90 minutes"))
-
-time_data<-specific_network_data_2021%>%
+time_data<-network_data_2022%>%
   drop_na(so_part_t)%>%
   mutate(Total=length(so_part_t))
-
 tab_time<-time_data%>%
   group_by(so_part_t)%>%
   summarize(Freq=n())%>%
@@ -179,15 +207,13 @@ tab_time<-time_data%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 
-```{r prepare_expect_bars, include=FALSE}
-specific_network_data_2021$so_part_expec<-factor(specific_network_data_2021$so_part_expec,
+```{r prepare_expect_bars, include=FALSE, eval=params$nre_expectations}
+network_data_2022$so_part_expec<-factor(network_data_2022$so_part_expec,
                                     levels=c(1,2,3,4,5),
                                     labels=c("Much less than expected", "Somewhat less than expected", "Same as expected", "Somewhat more than expected", "Much more than expected"))
-
-expect_data<-specific_network_data_2021%>%
+expect_data<-network_data_2022%>%
   drop_na(so_part_expec)%>%
   mutate(Total=length(so_part_expec))
-
 tab_expect<-expect_data%>%
   group_by(so_part_expec)%>%
   summarize(Freq=n())%>%
@@ -195,11 +221,9 @@ tab_expect<-expect_data%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
 ```
 
-```{r prepare_util_stackedbars, include=FALSE}
-
-useful_data<-specific_network_data_2021%>%
+```{r prepare_util_stackedbars, include=FALSE, eval=params$nre_useful}
+useful_data<-network_data_2022%>%
   pivot_longer(so_part_util_012021:so_part_util_152021, names_to="names_util", values_to="values_util")
-
 useful_data$names_util<-as.factor(useful_data$names_util)
 useful_data$names_util<-
   fct_recode(useful_data$names_util, 
@@ -207,66 +231,56 @@ useful_data$names_util<-
          "Participating in local improvement team meetings" = "so_part_util_022021",
          "Collaborating with other network members through web-based tools (e.g., Slack, GoogleDrive, Discussion Boards)" = "so_part_util_152021"
   )
-
 useful_data$values_util<-factor(useful_data$values_util, 
           levels=c(1,2,3,4,5,9),
           labels=c("Not at all useful", "A little bit useful", "Moderately useful", 
                    "Useful", "Very useful", 
                    "N/A; haven't done this year"))
 useful_data$values_util<-relevel(useful_data$values_util, "N/A; haven't done this year")
-
 useful_data<-useful_data%>%
   drop_na(values_util)%>%
   mutate(Total=length(values_util)/3)
-
 tab_useful<-useful_data%>%
   group_by(names_util, values_util)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 tab_useful_ordered<-tab_useful%>%
   filter(values_util=="Very useful")%>%
   arrange(Prop)%>%
   extract2("names_util")
-
 ```
 
 ```{r prepare_network_recommend_data, include=FALSE}
-recommend_data<-specific_network_data_2021%>%
-  drop_na(recommend)%>%
-  mutate(Total=length(recommend))%>%
-  mutate(Sum=sum(recommend))
+recommend_data<-network_data_2022%>%
+  drop_na(recommend_1)%>%
+  mutate(Total=length(recommend_1))%>%
+  mutate(Sum=sum(recommend_1))
   
-total_recommend<-length(recommend_data$recommend)
-sum_recommend<-sum(recommend_data$recommend)
+total_recommend<-length(recommend_data$recommend_1)
+sum_recommend<-sum(recommend_data$recommend_1)
 mean_recommend<-round(sum_recommend/total_recommend, 2)
-
 tab_recommend<-recommend_data%>%
-  group_by(net_role, recommend)%>%
+  group_by(net_role, recommend_1)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 mean_recommend
 ```
 
 ```{r prepare_improvementteam_yn_donut, include=FALSE}
-specific_network_data_2021$part_team_meetings_1
-
-specific_network_data_2021$part_team_meetings_1<-factor(specific_network_data_2021$part_team_meetings_1,
+network_data_2022$part_team_meetings_1
+network_data_2022$part_team_meetings_1<-factor(network_data_2022$part_team_meetings_1,
                   levels=c(1,2),
                   labels=c("Yes", "No"))
-team_meet<-specific_network_data_2021%>%
+team_meet<-network_data_2022%>%
   drop_na(part_team_meetings_1)%>%
   mutate(Total=length(part_team_meetings_1))
-
 tab_team_meet<-team_meet%>%
   group_by(part_team_meetings_1, net_role)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 tab_team_meet_donut<-team_meet%>%
   group_by(net_role, part_team_meetings_1)%>%
   summarize(Freq=n())%>%
@@ -274,7 +288,6 @@ tab_team_meet_donut<-team_meet%>%
   mutate(Pct=(percent(Prop, accuracy=1)))%>%
   mutate(ymax=cumsum(Prop))%>%
   mutate(ymin=c(0, head(ymax, n=-1)))
-
 tab_team_meet_ol<-team_meet%>%
   filter(net_role=="Other school and district leaders")%>%
   group_by(part_team_meetings_1)%>%
@@ -283,21 +296,17 @@ tab_team_meet_ol<-team_meet%>%
   mutate(Pct=(percent(Prop, accuracy=1)))%>%
   mutate(ymax=cumsum(Prop))%>%
   mutate(ymin=c(0, head(ymax, n=-1)))
-
 tab_team_meet_ol
-
 tab_team_meet
 ```
 
 ```{r meeting_frequency_bar, include=FALSE}
-specific_network_data_2021$part_team_meet_32021<-factor(specific_network_data_2021$part_team_meet_32021,
+network_data_2022$part_team_meet_32021<-factor(network_data_2022$part_team_meet_32021,
                                                         levels=c(1,2,3,4,5),
                                                         labels=c("Never", "Every 3 months or less", "Every other month", "Once a month", "More than once a month"))
-
-meet_freq_data<-specific_network_data_2021%>%
+meet_freq_data<-network_data_2022%>%
   drop_na(part_team_meet_32021)%>%
   mutate(Total=length(part_team_meet_32021))
-
 tab_meet_freq<-meet_freq_data%>%
   group_by(part_team_meet_32021)%>%
   summarize(Freq=n())%>%
@@ -306,14 +315,12 @@ tab_meet_freq<-meet_freq_data%>%
 ```
 
 ```{r prepare_meeting_participation_bars, include=FALSE}
-specific_network_data_2021$part_team_meetings_2<-factor(specific_network_data_2021$part_team_meetings_2,
+network_data_2022$part_team_meetings_2<-factor(network_data_2022$part_team_meetings_2,
                                                     levels=c(1,2,3,4,5),
                                                     labels=c("Never", "Rarely", "Some meetings", "Almost all meetings", "All meetings"))
-
-meet_part_data<-specific_network_data_2021%>%
+meet_part_data<-network_data_2022%>%
   drop_na(part_team_meetings_2)%>%
   mutate(Total=length(part_team_meetings_2))
-
 tab_meet_part<-meet_part_data%>%
   group_by(part_team_meetings_2)%>%
   summarize(Freq=n())%>%
@@ -322,10 +329,8 @@ tab_meet_part<-meet_part_data%>%
 ```
 
 ```{r prepare_equitydis_stackedbars, include=FALSE}
-
-eqdis_data<-specific_network_data_2021%>%
+eqdis_data<-network_data_2022%>%
   pivot_longer(equity_dis_1:equity_dis_3, names_to="names_eqdis", values_to="values_eqdis")
-
 eqdis_data$names_eqdis<-as.factor(eqdis_data$names_eqdis)
 eqdis_data$names_eqdis<-
   fct_recode(eqdis_data$names_eqdis, 
@@ -333,44 +338,36 @@ eqdis_data$names_eqdis<-
          "How gender and misogyny operate in our improvement work" = "equity_dis_2",
          "How class and classism operate in our improvement work" = "equity_dis_3"
   )
-
 eqdis_data$values_eqdis<-factor(eqdis_data$values_eqdis, 
           levels=c(1,2,3,4,5),
           labels=c("Never", "Every 3 months or less", "Every other month", 
                    "Once a month", "More than once a month"))
-
 eqdis_data<-eqdis_data%>%
   drop_na(values_eqdis)%>%
   mutate(Total=length(values_eqdis)/3)
-
 tab_eqdis<-eqdis_data%>%
   group_by(names_eqdis, values_eqdis)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 tab_eqdis_ordered<-tab_eqdis%>%
   filter(values_eqdis=="More than once a month")%>%
   arrange(Prop)%>%
   extract2("names_eqdis")
-
 ```
 
 ```{r prepare_inquiry_yn_bars, include=FALSE}
-specific_network_data_2021$is_inqcyclechal_y_n<-factor(specific_network_data_2021$is_inqcyclechal_y_n,
+network_data_2022$is_inqcyclechal_y_n<-factor(network_data_2022$is_inqcyclechal_y_n,
 levels=c(1,2,3),
 labels=c("Yes", "No", "I'm not sure"))
-
-inqyn_data<-specific_network_data_2021%>%
+inqyn_data<-network_data_2022%>%
   drop_na(is_inqcyclechal_y_n)%>%
   mutate(Total=length(is_inqcyclechal_y_n))
-
 tab_inqyn<-inqyn_data%>%
   group_by(is_inqcyclechal_y_n)%>%
   summarize(Freq=n())%>%
   mutate(Prop=Freq/sum(Freq))%>%
   mutate(Pct=(percent(Prop, accuracy=1)))
-
 tab_inqyn_role<-inqyn_data%>%
   group_by(net_role, is_inqcyclechal_y_n)%>%
   summarize(Freq=n())%>%
@@ -379,11 +376,10 @@ tab_inqyn_role<-inqyn_data%>%
 ```
 
 ```{r prepare_leader_sustain_yn, include=FALSE, eval=FALSE}
-specific_network_data_2021$sus_begun_planning<-factor(specific_network_data_2021$sus_begun_planning,
+network_data_2022$sus_begun_planning<-factor(network_data_2022$sus_begun_planning,
 levels=c(1,2,3),
 labels=c("Yes", "No", "Unsure"))
-
-sus_plan_data<-specific_network_data_2021%>%
+sus_plan_data<-network_data_2022%>%
   drop_na(sus_begun_planning)%>%
   mutate(Total=length(sus_begun_planning))
 ```
@@ -415,39 +411,48 @@ Thank you for your participation in this year’s network health survey. The dat
 # Who took the survey?
 
 ```{r response_rate, include=FALSE}
+
 specific_network_data_2021<-network_data_2021%>%
-  filter(network_name==params$network_name)
+  filter(network==params$network_2021)
+
 r21<-length(specific_network_data_2021$survey_response_id)
 r21
 members21<-length(network_roster_2021$first_name)
 members21
 rr21<-round((r21/members21)*100)
 rr21
-rr20<-65
+
+r22<-length(network_data_2022$respondent_id)
+r22
+members22<-length(network_roster_2022$firstname)
+members22
+rr22<-round((r22/members22)*100)
+rr22
+
+rr_diff<-rr22-rr21
+rr_diff
 ```
 
-Overall, your network’s response rate was **`r rr21`%**. This is `r if(rr21>rr20){"an improvement over"}` `r if(rr21==rr20){"consistent with"}` `r if(rr21<rr20){"below"}` last year’s response rate, which was `r rr20`%. `r if(rr21<50){"Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to Partners for Network Improvement (PNI) for tips on how to increase response rates moving forward."}`
+Overall, your network’s response rate was **`r rr22`%**. This is `r if(rr_diff>=3){"an improvement over"}` `r if(-3<=rr_diff& rr_diff<=3){"consistent with"}` `r if(rr_diff<=-3){"below"}` last year’s response rate, which was `r rr21`%. Note that the percentages for your overall network response rate were calculated using your network roster data from the RAND foundation. `r if(rr22<50){"Given your network response rate was under 50%, we urge you to interpret these results with caution as they represent only a portion of your network’s membership. Please reach out to Partners for Network Improvement (PNI) for tips on how to increase response rates moving forward."}`
 
 Table 1 describes the **distribution of respondents by role group**:
 
 ```{r role_group_response_rates, echo=FALSE, tab.cap="Responses by Role Group"}
-specific_network_data_2021<-network_data_2021%>%
-  filter(network_name==params$network_name)
-rolegroup_table<-datasummary(net_role +1 ~ N, data=specific_network_data_2021, output="flextable")
+rolegroup_table<-datasummary(net_role +1 ~ N, data=network_data_2022, output="flextable")
 rolegroup_table%>%
   set_header_labels(net_role="Network role", N="Number of respondents")%>%
   width(width=3.25)
 ```
-Note that both the percentages for your overall network response rate and the response rates per role group in Table 1 were calculated using your network roster data from the RAND foundation. 
+Note that these response rates includes ALL survey respondents from your network, including those who did not complete all survey questions.
 
 Table 2 describes the **distribution of respondents by school**:\
-[INSERT TABLE WITH RESPONDENTS BY SCHOOL HERE--POSSIBLE TO INCLUDE RESPONSE RATE % HERE?]
+<INSERT SCHOOL TABLE HERE.
 
 Figures \@ref(fig:rrRace) and \@ref(fig:rrGender) show **how your respondents varied by race/ethnicity and gender**, respectively. Given your knowledge of your network’s overall membership, consider whether any particular groups seem under-represented in your respondents this year. How might you increase responses from this group in future surveys to ensure all perspectives are fully reflected in your network’s data?
 
 ```{r response_rate_by_race_ethnicity, echo=FALSE, fig.id="rrRace", fig.cap= paste("Survey Respondents by Racial Ethnic Background (n=", race_data$Total, "respondents)")}
 race_ethnicity<-ggplot(tab_re, aes(x=fct_reorder(race_ethnicity, Prop, .desc=TRUE), y=Prop)) +
-  geom_col(fill="deepskyblue1") +
+  geom_col(fill="dodgerblue2") +
   coord_flip()+
   geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
@@ -472,7 +477,7 @@ race_ethnicity +
 
 ```{r response_rate_by_gender, echo=FALSE, fig.id="rrGender", fig.cap=paste("Survey Respondents by Gender (n=", gender_data$Total, "respondents)")}
 gender<-ggplot(tab_gender, aes(x=fct_reorder(gender_v3, Prop, .desc=TRUE), y=Prop)) +
-  geom_col(fill="deepskyblue1") +
+  geom_col(fill="dodgerblue2") +
   coord_flip()+
   scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   scale_x_discrete(drop=FALSE, labels=scales::wrap_format(25))+
@@ -505,18 +510,37 @@ Network leadership develops and sustains many other aspects of network health. T
 
 Figure # displays the **percentage of network members who know who their network leaders are**. Figure # displays the distribution of members who believe **the roles and responsibilities of network leaders are clear to them**.
 
-[INSERT NL_BACKGROUND_1 BAR GRAPH HERE (FIGURE #)]
+``` {r know_leaders, echo=FALSE, fig.id="knowLeaders", fig.cap=paste ("Network members who know who networks leaders are (n=", know_leaders_data$Total, "respondents)")}
+know_leaders_plot<-ggplot(tab_know_leaders, aes(x= Prop, y= fct_rev(factor(nl_background_1))))+
+  geom_col(fill="dodgerblue2")+
+  scale_y_discrete(labels = scales::wrap_format(25))+
+  scale_x_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
+  labs (
+    title="I know who the leaders are",
+    y="",
+    x="Percent of respondents")+
+  theme_classic()+
+  theme(plot.title.position="plot")
+know_leaders_plot+
+  geom_text(aes(label=if_else(Prop==0, "0%", Pct), hjust=if_else(Prop>0.05, 1.25, 0)), fontface="bold")+
+  theme(
+  plot.title = element_text(family="sans", size=10, face="bold.italic"),
+  axis.title.y = element_text(family="sans", size=10, color="black"),
+  axis.title.x = element_text(family="sans", size=10, color="black"),
+  axis.text.y=element_text(family="sans", size=8, color="black"),
+  axis.text.x=element_text(family="sans", size=8, color="black")
+)
+```
 
 [INSERT NL_BACKGROUND_2 BAR GRAPH HERE (FIGURE #)]
 
-`r if(params$engagement){"Figure # displays **how network members report typically engaging with network leaders**. Note, these data are only for those members who indicated they know who their leaders are (see Figure #)."}`
+`r if(params$leaders_engage){"Figure # displays **how network members report typically engaging with network leaders**. Note, these data are only for those members who indicated they know who their leaders are (see Figure #)."}`
 
 [INSERT NL_BACKGROUND_3_n HERE (FIGURE #)]
 
 Finally, Figure # displays **how network members feel about communication with various sources in the network**. Note, these data are for all network members, regardless of whether they know who their leaders are.
 
-``` {r group_communication, echo=FALSE, fig.height=4, fig.id="gcom", fig.cap=paste("Amount of Communication with Network Sources (n=", groupcom_data$Total, "respondents)")}
-
+``` {r group_communication, echo=FALSE, eval=params$leaders_networkcomms, fig.height=4, fig.id="gcom", fig.cap=paste("Amount of Communication with Network Sources (n=", groupcom_data$Total, "respondents)")}
 gcom_plot<-tab_gcom%>%
   mutate(names_gcom=factor(names_gcom, tab_gcom_ordered))%>%
            ggplot(aes(x=names_gcom, y=Prop, fill=fct_rev(values_gcom)))+
@@ -554,13 +578,13 @@ Together, these data show how well your members know and understand the function
 
 These data summarize network members’ perceptions of time spent on network activities. Network members have multiple responsibilities, and it is crucial they view their participation as valuable if they are going to prioritize network activities amongst competing professional demands.
 
-```{asis time_text, echo=params$time}
+```{asis time_text, echo=params$nre_intensity}
 Figure \@ref(fig:time) displays **how much time network members estimate they spend participating in the network weekly**.
 ```
 
-``` {r participation_time, eval=params$time, echo=FALSE, fig.id="time", fig.cap=paste ("Estimated Weekly Network Participation (n=", time_data$Total, "respondents)")}
+``` {r participation_time, eval=params$nre_intensity, echo=FALSE, fig.id="time", fig.cap=paste ("Estimated Weekly Network Participation (n=", time_data$Total, "respondents)")}
 time_plot<-ggplot(tab_time, aes(x= fct_rev(factor(so_part_t)), y= Prop))+
-  geom_col(fill="deepskyblue1")+
+  geom_col(fill="dodgerblue2")+
   scale_x_discrete(drop=FALSE)+
   scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   coord_flip()+
@@ -581,13 +605,13 @@ time_plot+
 )
 ```
 
-```{asis expect_text, echo=params$expect}
+```{asis expect_text, echo=params$nre_expectations}
 Figure \@ref(fig:expect) displays **how much time network members estimate they spend participating in the network weekly**.
 ```
 
-```{r participation_expect, eval=params$expectations, echo=FALSE, fig.id="expect", fig.cap=paste("Expected Participation in Network Activities (n=", expect_data$Total, "respondents)")}
+```{r participation_expect, eval=params$nre_expectations, echo=FALSE, fig.id="expect", fig.cap=paste("Expected Participation in Network Activities (n=", expect_data$Total, "respondents)")}
 plot_expect<-ggplot(tab_expect, aes(x=fct_rev(factor(so_part_expec)), y=Prop))+
-  geom_col(fill="deepskyblue1")+
+  geom_col(fill="dodgerblue2")+
   coord_flip()+
   scale_y_continuous(breaks=extended_breaks(6), labels = scales::percent_format(accuracy = 1L))+
   scale_x_discrete(drop=FALSE, labels=scales::wrap_format(15))+
@@ -607,15 +631,13 @@ plot_expect+
   axis.text.y=element_text(family="sans", size=8, color="black"),
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
-
 ```
 
-`r if(params$time & params$expect) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
+`r if(params$nre_intensity & params$nre_expectations) {"Together, these questions give you an idea of whether members are spending a reasonable amount of time on network-related activities, and whether the hub or other network stakeholders might consider ways to manage participants’ expectations around network participation."}`
 
 Figure \@ref(fig:useful) displays **the usefulness of various network activities from the perspective of network members**. Consider which activities network members find most useful: Are these the activities on which they spend the most time? Are there steps you could take to improve the utility of other network activities that members currently view as less useful?
 
 ``` {r useful_activities, echo=FALSE, fig.height=4, fig.id="useful", fig.cap=paste("Usefulness of Various Network Activities (n=", useful_data$Total, "respondents)")}
-
 useful_plot<-tab_useful%>%
   mutate(names_util=factor(names_util, tab_useful_ordered))%>%
            ggplot(aes(x=names_util, y=Prop, fill=fct_rev(values_util)))+
@@ -653,8 +675,7 @@ useful_plot+guides(fill=guide_legend(nrow=1))+
 Overall, network members’ satisfaction with network engagement is captured by their assessment of whether they would recommend this network to a colleague. Figure \@ref(fig:netRec) displays the **distribution of network members (except hub members) who would recommend this network to a colleague**. Note that this figure divides responses by respondents' roles within the network, allowing you to compare across role groups. 
 
 ```{r recommend_graph, echo=FALSE, fig.id="netRec", fig.cap=paste("Network Recommendation (n=", recommend_data$Total, "respondents)")}
-
-rec_graph<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
+rec_graph<-ggplot(tab_recommend, aes(x=recommend_1, y=Freq, fill=net_role))+
   geom_col(position="stack")+
   scale_x_continuous(breaks=extended_breaks(10))+
   labs (
@@ -668,7 +689,6 @@ rec_graph<-ggplot(tab_recommend, aes(x=recommend, y=Freq, fill=net_role))+
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank(),
         panel.grid.major.y = element_line(color="grey", size=0.25))
-
 rec_graph + theme(
     plot.title = element_text(family="sans", size=10, face="bold.italic"),
     axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -676,7 +696,6 @@ rec_graph + theme(
     axis.text.y=element_text(family="sans", size=8, color="black"),
     axis.text.x=element_text(family="sans", size=8, color="black")
   )
-
 ```
 
 On average, network members' likelihood to recommend the network to a colleague was **`r mean_recommend`**. This is an [increase over/is consistent with/is below] network members' likelihood to recommend the network last year, which was 8.0. 
@@ -689,18 +708,16 @@ Consistency of network participation is important to building internal team conn
 Figure \@ref(fig:teamDonut) displays **the number of members (excluding the network hub) who indicated they are part of a local improvement team**.  
 
 ```{r team_meetings_donut, echo=FALSE, fig.id="teamDonut", fig.height=2, fig.cap=paste ("Number of Members who Report Participating in Local Improvement Team Meetings (n=", team_meet$Total, "respondents)")}
-
 #Note we don't use this first one, but keeping the code here just in case!
 meetings_donut <- ggplot(tab_team_meet_donut) +
     geom_rect(aes(xmin=2, xmax=4, ymin=ymin, ymax=ymax, fill=part_team_meetings_1)) +
     coord_polar(theta="y", start=0, direction=1) +
     xlim(c(0, 5)) +
-   scale_fill_manual(values=c("deepskyblue1", NA, NA)) +
+   scale_fill_manual(values=c("dodgerblue2", NA, NA)) +
     geom_text(aes(x=0, y=0, label=paste0(round(Prop[1], 2)*100, '%')), size=6) +
     geom_text(aes(x=5, y=.5, label=""), size=6) +
     theme_void() +
     theme(legend.position="none")
-
 meetings_stack<-ggplot(tab_team_meet, aes(x=part_team_meetings_1, y=Freq, fill=net_role))+
   geom_col(position="stack")+
   coord_flip()+
@@ -714,7 +731,6 @@ meetings_stack<-ggplot(tab_team_meet, aes(x=part_team_meetings_1, y=Freq, fill=n
         legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
-
 meetings_stack + theme(
     plot.title = element_text(family="sans", size=10, face="bold.italic"),
     axis.title.y = element_text(family="sans", size=10, color="black"),
@@ -727,7 +743,7 @@ The following questions pertain to those members who indicated they were part of
 
 ``` {r team_meet_freq, echo=FALSE, fig.id="meetFreq", fig.cap=paste ("Frequency of Local Improvement Team Meetings (n=", meet_freq_data$Total, "respondents)")}
 meet_freq_plot<-ggplot(tab_meet_freq, aes(x= fct_rev(factor(part_team_meet_32021)), y= Prop))+
-  geom_col(fill="deepskyblue1")+
+  geom_col(fill="dodgerblue2")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
   scale_x_discrete(labels = scales::wrap_format(15), drop=FALSE)+
   coord_flip()+
@@ -750,7 +766,7 @@ meet_freq_plot+
 
 ``` {r team_meet_part, echo=FALSE, fig.id="meetPart", fig.cap=paste ("Participation in Local Improvement Team Meetings (n=", meet_part_data$Total, "respondents)")}
 meet_freq_plot<-ggplot(tab_meet_part, aes(x= fct_rev(factor(part_team_meetings_2)), y= Prop))+
-  geom_col(fill="deepskyblue1")+
+  geom_col(fill="dodgerblue2")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
   scale_x_discrete(labels = scales::wrap_format(15))+
   coord_flip()+
@@ -771,11 +787,11 @@ meet_freq_plot+
 )
 ```
 
-`r if(params$equity){"Additionally, it is important to not only consider frequency and attendance within improvement team meetings, but also the content of those meetings, or what members typically do or discuss when in attendance. Figure # displays members’ perceptions of the **frequency with which they discuss various topics related to equity during local improvement team meetings**. Given the centrality of diversity, equity, and inclusion to network improvement, consider whether local improvement teams need additional support around how to center equity in team meetings moving forward."}`
+`r if(params$ic_equity){"Additionally, it is important to not only consider frequency and attendance within improvement team meetings, but also the content of those meetings, or what members typically do or discuss when in attendance. Figure # displays members’ perceptions of the **frequency with which they discuss various topics related to equity during local improvement team meetings**. Given the centrality of diversity, equity, and inclusion to network improvement, consider whether local improvement teams need additional support around how to center equity in team meetings moving forward."}`
 
 [INSERT EQUITY_DIS_n HERE (FIGURE #)]
 
-`r if(params$trust){"Finally, Figure # displays **network members’ perceptions of relational trust within local improvement teams**. Consider whether this is sufficient to engage in productive dialogue and improvement routines."}`
+`r if(params$ic_trust){"Finally, Figure # displays **network members’ perceptions of relational trust within local improvement teams**. Consider whether this is sufficient to engage in productive dialogue and improvement routines."}`
 
 [INSERT SO_RT_n HERE (FIGURE #)]
 
@@ -785,7 +801,7 @@ Figure \@ref(fig:inqcycleyn) displays **the number of team members and team lead
 
 ``` {r inqcycle_y_n, echo=FALSE, fig.id="inqcycleyn", fig.cap=paste ("Engagement in Inquiry Cycles (n=", inqyn_data$Total, "respondents)")}
 inq_plot<-ggplot(tab_inqyn, aes(x= fct_reorder(is_inqcyclechal_y_n, Pct, .desc=TRUE), y= Prop))+
-  geom_col(fill="deepskyblue1")+
+  geom_col(fill="dodgerblue2")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1L), breaks=extended_breaks(8))+
   coord_flip()+
   labs (
@@ -820,7 +836,6 @@ inq_stack<-ggplot(tab_inqyn_role, aes(x=fct_reorder(is_inqcyclechal_y_n, Freq, .
         legend.position="bottom",
         legend.background=element_rect(fill="gray100", color="black"),
         legend.title=element_blank())
-
 inq_stack+
   theme(
   plot.title = element_text(family="sans", size=10, face="bold.italic"),
@@ -829,7 +844,6 @@ inq_stack+
   axis.text.y=element_text(family="sans", size=8, color="black"),
   axis.text.x=element_text(family="sans", size=8, color="black")
 )
-
 ```
 The remaining data in this section provide further insights from those members who shared that they do participate in inquiry routines. Team members and team leads were asked to **indicate the extent to which they found various aspects of inquiry routines challenging** (Figure #). Within your network, we found the following responses:
 
@@ -837,15 +851,14 @@ The remaining data in this section provide further insights from those members w
 
 While we anticipate a learning curve in mastering inquiry routines, if these responses are lower than you would expect, consider any additional steps the network hub can take to support members around challenging aspects of the work. Note also those aspects of inquiry routines members said were not applicable to their practice. Are these practices you would expect members to be familiar with?
 
-```{asis state_text, echo=params$state}
+```{asis state_text, echo=params$sa_state}
 \newpage
 # How do network members perceive the network's alignment with state piorities?
-
 ```
 
-`r if(params$state){"An important, yet often difficult, aspect of network health is aligning the networks’ goals and activities with other priorities in schools’ surrounding environments. This increases the sense of coherence within network schools and may contribute to network engagement and sustainability."}`
+`r if(params$sa_state){"An important, yet often difficult, aspect of network health is aligning the networks’ goals and activities with other priorities in schools’ surrounding environments. This increases the sense of coherence within network schools and may contribute to network engagement and sustainability."}`
 
-`r if(params$state){"While the primary report provides information about how network members perceive the network’s alignment with school and local district priorities, here we present data on the alignment of network goals with state-level priorities. Figure # displays the **distribution of network members (except hub members) who agree that the work they are doing in the network is consistent with the state’s programs and policies aimed at improving the network outcome**."}`
+`r if(params$sa_state){"While the primary report provides information about how network members perceive the network’s alignment with school and local district priorities, here we present data on the alignment of network goals with state-level priorities. Figure # displays the **distribution of network members (except hub members) who agree that the work they are doing in the network is consistent with the state’s programs and policies aimed at improving the network outcome**."}`
 
 \newpage
 # How do network members view the sustainability of the network?
@@ -867,5 +880,3 @@ Network members were first asked to **indicate the extent to which they agreed t
 Figures #-## display network members’ perceptions of the likelihood that various network activities will sustain after the network no longer has access to support from BMGF. Figure # displays **how members view sustainability of network activities within their school**. Figure # displays **how they view sustainability of activities within their local improvement team**. Finally, Figure # displays **how members themselves foresee sustaining various improvement activities**. Consider how these responses align with (or diverge from) network leaders’ priorities for network sustainability.
 
 Finally, Figure # provides an overview of **how network members perceive various potential challenges to network sustainability**.
-
-Consider how these perspectives align with leaders’ sustainability priorities and their own views of potential threats to sustainability. 
